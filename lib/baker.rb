@@ -2,6 +2,8 @@
 
 require_relative "baker/version"
 
+require 'optparse'
+require 'tempfile'
 require 'fileutils'
 require 'ostruct'
 require 'rails/generators'
@@ -12,37 +14,42 @@ require_relative 'baker/bakerlib'
 
 class Baker
 
-  attr_accessor :debug
-  attr_accessor :recipe
+  attr_accessor :debug, :recipe, :file_name, :interactive
 
   def process_args
 
-    @debug = false
-    
-    # Process ARGS:
-    #   -d = Debug
-    #   -f = Show Future Window
-    #   -r=YYYYMMDD = Simulate Recurring Tasks for the given date and exit
-    while ARGV[0] =~ /^-+(\w)(.*)$/
-      case $1
-      when "d"
-        @debug = true
-      else
-        puts "Unknown option: #{$1}"
-        exit(1)
-      end
-      ARGV.shift
+    begin
+      OptionParser.new do |opts|
+        opts.banner = 'Usage: baker [options] [file]'
+
+        opts.on('-v', '--verbose', 'Enable verbose/debug output') do
+          @debug = true
+          puts "Verbose mode enabled".yellow
+        end
+
+        opts.on('-d', '--diff', 'Show diff of the bake file to its template') do
+          @diff_mode = true
+          puts "Diff mode enabled".yellow
+        end
+
+        opts.on('-i', '--interactive', 'Enable interactive mode') do
+          @interactive = true
+        end
+
+        opts.on('-h', '--help', 'Displays Help') do
+          puts opts
+          exit
+        end
+      end.parse!
+    rescue OptionParser::InvalidOption => e
+      puts e
+      exit(1)
     end
 
-    # If no file is given, assume the user wants to edit "~/plan.md"
-    if ARGV.empty?
-      @file_name = "template.md"
-      Dir.chdir Dir.home
-    else
-      @file_name = ARGV[0]
-    end
-
+    @file_name = ARGV.shift || 'template.md'
     @file_name = File.expand_path(@file_name)
+
+    puts "Bake File: #{@file_name}".yellow if @debug
 
     return nil
   end
@@ -62,6 +69,8 @@ class Baker
     status = process_args
     return if status == :close
 
+    # @file_contents represents the file that baker believes is on disk. 
+    # It is used to check if there was any concurrent modification.
     @file_contents = File.read(@file_name)
     
     @recipe = Recipe.from_s(@file_contents)
@@ -131,6 +140,9 @@ class Baker
             puts "Error: The file #{template_name_suggestion} already exists.".red
 
             puts " ? Do you want to overwrite the file? Enter y/Y to overwrite. Any other key to cancel and exit baker.".yellow
+            
+            # Make a copy of the file contents before the user decides to overwrite
+            @file_contents = File.read(template_name_suggestion)
 
             exit(1) if STDIN.gets().strip.downcase != 'y'
           end
@@ -255,11 +267,25 @@ class Baker
     if File.exist?(@file_name) && @file_contents != nil
       if File.read(@file_name) != @file_contents
         puts " → File has been modified by another program, while baker processed todos.".red
-        puts " ? Do you want to overwrite the file? Enter y/Y to overwrite. Any other key to cancel and exit baker.".yellow
-        input = STDIN.gets()
-        if input.strip.downcase != 'y'
-          puts " → Exiting without saving. Please manually mark the successfully executed steps as done.".red
-          exit 1
+
+        while true
+          puts " ? Do you want to overwrite the file? Enter y/Y to overwrite or d/D to show diff. Any other key to cancel and exit baker.".yellow
+          input = STDIN.gets()
+          case input.strip.downcase
+          when 'y'
+            puts " → Exiting without saving. Please manually mark the successfully executed steps as done.".red
+            exit 1
+          when 'd'            
+            puts " → Diff:".red
+            Tempfile.open('assumed_file_contents') do |tempfile|
+              tempfile.write(@file_contents)
+              tempfile.flush
+              puts `git diff --color #{tempfile.path} #{@file_name}`
+            end
+            puts
+            next # Repeat
+          end          
+          break
         end
       end
     end

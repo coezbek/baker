@@ -132,6 +132,7 @@ Running Baker templates involves executing shell commands on your machine. Alway
 
 ## TODO
 
+- [x] Prevent overwriting a manually edited bake file.
 - [ ] Add interactive mode (`baker -i`) to prompt each step before executing it.
 - [ ] Add forced interactive steps `- [ ]?` to prompt the user even if not running in interactive mode.
 - [ ] Add steps that are always executed, even when rerunning the bake script.
@@ -150,7 +151,7 @@ Running Baker templates involves executing shell commands on your machine. Alway
 
   - Browse a collection of Rails Application Templates at [RailsBytes](https://railsbytes.com/).
   - [Rubidium.io Templates](https://www.rubidium.io/) is/was another repoistory of some Rails Applicatoin Templates.
-  
+
 - **[Jupyter Notebooks](https://jupyter.org/)**: Jupyter notebooks are excellent for documenting and executing code. They provide visual indications of executed code and allow easy re-execution from the beginning. Baker shares the same tinker style but treats completed tasks as done, making it more versatile for project setups.
 
 - **[Literate Programming](https://en.wikipedia.org/wiki/Literate_programming)**: Literate programming allows mixing code and documentation in a single file. Baker adopts a similar approach but is focused on executing setup steps.
