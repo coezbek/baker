@@ -165,6 +165,16 @@ class RecipeStep
     end
   end
 
+  def mark_todo
+    if lines[0] =~ /\[[xX\-.y]\]/
+      lines[0].sub!(/\[[xX\-.y]\]/, "[ ]")
+      @task_marker = " "
+    else
+      puts lines.inspect
+      raise
+    end
+  end
+
   def directive_type
     raise "Not a directive" if type != :directive
     return @directive_type
