@@ -90,9 +90,13 @@ class Baker
 
             puts initial_value
 
-            line.attributes = TTY::Prompt.new.ask(" → Please enter your value for variable '#{line.content}':\n".yellow, value: initial_value)
-            # line.attributes = STDIN.gets().strip
-            line.lines = ["::var[#{line.content}]{#{line.attributes}}"]
+            if use_tty = true
+              line.attributes = TTY::Prompt.new.ask(" → Please enter your value for variable '#{line.content}':\n".yellow, value: initial_value)
+            else
+              puts " → Please enter your value for variable '#{line.content}':".yellow
+              line.attributes = STDIN.gets().strip
+            end
+            line.lines = ["::var[#{line.content}]{#{line.attributes}}\n"]
             @context[line.content] = line.attributes
 
             puts ""
