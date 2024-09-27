@@ -53,6 +53,7 @@ The following directives are available:
   - Note: The `cd` shell command is executed in a subshell and can't be used to change the current working directory of Baker.
 
 - `::template[name]`: Makes a copy of the currently running bake file, removes the `::template` directive, and saves it under the given name. Use this in generic templates to prevent Baker from editing the generic template.
+  - The template directive is removed and replaced with the `::template_source` directive, which points to the original template file. You can use this together with command line option `--diff` to see what changes you have made to the original template.
 
 ## Expanded Example
 
@@ -136,6 +137,10 @@ Running Baker templates involves executing shell commands on your machine. Alway
 - [ ] Add steps that are always executed, even when rerunning the bake script.
 - [ ] Add a way to enable/skip subsections (indented todos).
 - [ ] Finalize README and add sections on how to install, develop, and contribute.
+
+## Change Log
+
+- [ ] Add support for the `::templateSource` directive.
 
 ## Related Works
 

@@ -134,13 +134,15 @@ class Baker
 
             exit(1) if STDIN.gets().strip.downcase != 'y'
           end
-          line.delete
+          line.lines = ["::template_source[#{@file_name}]"]
 
           puts ""
 
           @file_name = template_name_suggestion
           save
           next
+        when :template_source
+          # Do nothing
         else
           raise "Unknown directive type: #{line.directive_type}"
         end
