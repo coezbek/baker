@@ -8,26 +8,32 @@ RSpec.describe Baker do
       @baker = Baker.new
     end
 
-    it 'sets debug to true when -d is passed' do
-      ARGV.replace(['-d'])
-      @baker.process_args
-      expect(@baker.instance_variable_get(:@debug)).to be true
+    it 'enables debug mode when -d is passed' do
+      stub_const('ARGV', ['-d'])
+      expect { @baker.process_args }.not_to raise_error
+      expect(@baker.debug).to be true
+    end
+
+    it 'enables interactive mode when -i is passed' do
+      stub_const('ARGV', ['-i'])
+      expect { @baker.process_args }.not_to raise_error
+      expect(@baker.interactive).to be true
     end
 
     it 'sets file_name to template.md when no arguments are passed' do
-      ARGV.replace([])
+      stub_const('ARGV', [])
       @baker.process_args
-      expect(@baker.instance_variable_get(:@file_name)).to eq(File.expand_path('template.md'))
+      expect(@baker.file_name).to eq(File.expand_path('template.md'))
     end
 
     it 'sets file_name to the given argument' do
-      ARGV.replace(['testfile.md'])
+      stub_const('ARGV', ['testfile.md'])
       @baker.process_args
-      expect(@baker.instance_variable_get(:@file_name)).to eq(File.expand_path('testfile.md'))
+      expect(@baker.file_name).to eq(File.expand_path('testfile.md'))
     end
 
     it 'exits with an unknown option' do
-      ARGV.replace(['-x'])
+      stub_const('ARGV', ['-x'])
       expect { @baker.process_args }.to raise_error(SystemExit).and output(/Unknown option: x/).to_stdout
     end
   end
