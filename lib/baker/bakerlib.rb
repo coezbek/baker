@@ -52,6 +52,8 @@ class Recipe
         case directive
         when "template"
           j.steps << RecipeStep.new(line, type: :directive, directive_type: :template, content: content, attributes: attributes)
+        when "template_source"
+          j.steps << RecipeStep.new(line, type: :directive, directive_type: :template_source, content: content, attributes: attributes)
         when "var"
           j.steps << RecipeStep.new(line, type: :directive, directive_type: :var, content: content, attributes: attributes)
         when "cd"
