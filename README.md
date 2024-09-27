@@ -132,7 +132,6 @@ Running Baker templates involves executing shell commands on your machine. Alway
 
 ## TODO
 
-- [x] Prevent overwriting a manually edited bake file.
 - [ ] Add interactive mode (`baker -i`) to prompt each step before executing it.
 - [ ] Add forced interactive steps `- [ ]?` to prompt the user even if not running in interactive mode.
 - [ ] Add steps that are always executed, even when rerunning the bake script.
@@ -141,7 +140,19 @@ Running Baker templates involves executing shell commands on your machine. Alway
 
 ## Change Log
 
-- [ ] Add support for the `::templateSource` directive.
+- Support for diff mode (`-d, --diff`) to show the diff between the current bake file and the original template file.
+- Prevent overwriting a manually edited bake file.
+- Add support for the `::templateSource` directive.
+
+## Command line options
+
+```
+baker [options] [file]
+```
+
+Options:
+- `-v`, `--verbose`: Print more information about what Baker is doing.
+- `-d`, `--diff`: Show the diff between the current bake file and the original template file.
 
 ## Related Works
 

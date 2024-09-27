@@ -64,6 +64,40 @@ class Baker
     return o.instance_eval(input)
   end
 
+  # Run diff will unmark all completed steps and perform a diff against the original template source
+  #
+  # The original template source is searched using the ::template_source directive.
+  #
+  # The diff is shown using git diff.
+  def run_diff
+
+    template_source_file = nil
+
+    @recipe.steps.each { |line|      
+      case line.type
+      when :directive
+        case line.directive_type
+        when :template_source
+          template_source_file = line.content
+        end
+      when :ruby, :shell, :manual
+        line.mark_todo if line.completed?
+      end
+    }
+
+    if template_source_file.nil?
+      puts "Error: No template source file found. Please add a ::template_source{path_to_template} directive to the bake file.".red
+      exit(1)
+    end
+    
+    to_write = @recipe.to_s
+    Tempfile.open("#{File.basename(@file_name)}_unbaked") do |tempfile|
+      tempfile.write(to_write)
+      tempfile.flush
+      puts `git diff --color #{template_source_file} #{tempfile.path}`
+    end
+  end
+
   def run
 
     status = process_args
@@ -74,6 +108,12 @@ class Baker
     @file_contents = File.read(@file_name)
     
     @recipe = Recipe.from_s(@file_contents)
+
+    if @diff_mode
+      run_diff()
+
+      return
+    end
     
     @context = { file_name: @file_name }
   

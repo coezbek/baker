@@ -8,8 +8,8 @@ RSpec.describe Baker do
       @baker = Baker.new
     end
 
-    it 'enables debug mode when -d is passed' do
-      stub_const('ARGV', ['-d'])
+    it 'enables verbose mode when -v is passed' do
+      stub_const('ARGV', ['-v'])
       expect { @baker.process_args }.not_to raise_error
       expect(@baker.debug).to be true
     end
@@ -34,7 +34,7 @@ RSpec.describe Baker do
 
     it 'exits with an unknown option' do
       stub_const('ARGV', ['-x'])
-      expect { @baker.process_args }.to raise_error(SystemExit).and output(/Unknown option: x/).to_stdout
+      expect { @baker.process_args }.to raise_error(SystemExit).and output(/invalid option: -x/).to_stdout
     end
   end
 
@@ -112,6 +112,17 @@ RSpec.describe Recipe do
 
       expect(recipe.to_s).to eq(input)
     end        
+
+    it '.from_s to_s round-trip bigger' do
+
+      input = <<~EOL
+      - Enter the app name:
+      ::var[APP_NAME]
+
+      - Enter the host name:
+      EOL
+      expect(Recipe.from_s(input).to_s).to eq(input)
+    end    
 
     it 'creates a Recipe object from a simple var string' do
       recipe = Recipe.from_s("::var[test]{value}")
