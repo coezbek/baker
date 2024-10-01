@@ -14,6 +14,8 @@ require_relative 'baker/bakerlib'
 
 class Baker
 
+  include BakerActions
+
   attr_accessor :debug, :recipe, :file_name, :interactive
 
   def process_args
@@ -212,12 +214,18 @@ class Baker
           next
         end
         @context[:rails_gen_base] = Rails::Generators::Base.new
+        @context[:myself] = self
         o = Struct.new(*@context.keys).new(*@context.values)
         # require 'ostruct'
         # o = OpenStruct.new(@context)
         o.singleton_class.define_singleton_method(:const_missing) { |name| o[name] }
+        o.define_singleton_method (:inspect) {
+            "<#{self.class}: #{self.instance_variables.map{|v| "#{v}=#{instance_variable_get(v).inspect.truncate(100)}"}.join(", ")}>"
+        }
+
         o.extend Forwardable
-        o.def_delegators :rails_gen_base, :inject_into_file, :gsub_file, :create_file, :copy_file, :insert_into_file, :inside, :environment, :gem, :generate, :git, :initializer, :lib, :rails_command, :rake, :route
+        o.def_delegators :rails_gen_base, :create_file, :copy_file, :inside, :environment, :gem, :generate, :git, :initializer, :lib, :rails_command, :rake, :route
+        o.def_delegators :myself, :inject_into_file, :append_file, :append_to_file, :insert_into_file, :gsub_file
 
         #o.singleton_class.include(Thor::Actions)
         #o.singleton_class.include(Rails::Generators::Actions)
