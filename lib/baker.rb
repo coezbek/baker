@@ -10,6 +10,7 @@ require 'rails/generators'
 require "tty-prompt"
 require 'rainbow/refinement'
 using Rainbow
+require 'ap'
 require_relative 'baker/bakerlib'
 require_relative 'baker/bakeractions'
 
@@ -18,6 +19,14 @@ class Baker
   include BakerActions
 
   attr_accessor :debug, :recipe, :file_name, :interactive
+  def inspect
+    # Nothing gained here from seeing instance variables
+    return to_s
+  end
+
+  def to_hash
+    (self.instance_variables - [:@file_contents, :@recipe]).inject({}){ |cont, attr| cont[attr] = instance_variable_get(attr); cont }
+  end
 
   def process_args
 
