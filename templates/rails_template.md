@@ -71,11 +71,11 @@
       - text
       - integer
       - float
-      - decimal - Prefer over float for currency/accurate numbers
+      - decimal{6,2} - Prefer over float for currency/accurate numbers
       - datetime
       - boolean
       - references
-    - [ ] `rails generate scaffold Event name:string date:datetime location:string description:text event_type:string 'leg1distance:decimal{6,3} leg2distance:decimal{6,3} leg3distance:decimal{6,3}`
+    - [ ] `rails generate scaffold Event name:string date:datetime location:string description:text event_type:string 'leg1distance:decimal{6,3}' 'leg2distance:decimal{6,3}' 'leg3distance:decimal{6,3}'`
     - [ ] `rails generate scaffold Participation user:references event:references planned:boolean performed:boolean`
     - [ ] `rails db:migrate`
     - [ ] `git add . && git commit -m "Add Basic Database Classes for Sisuman" && git push`
