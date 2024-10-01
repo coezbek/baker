@@ -11,6 +11,7 @@ require "tty-prompt"
 require 'rainbow/refinement'
 using Rainbow
 require_relative 'baker/bakerlib'
+require_relative 'baker/bakeractions'
 
 class Baker
 
