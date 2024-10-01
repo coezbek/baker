@@ -22,6 +22,10 @@
   - [ ] `git commit -m "rails new #{APP_NAME}"`
   - [ ] `git push --set-upstream origin main`
 
+- Configure email defaults:
+  - [ ] `ruby -pi -e 'gsub(/from@example.com/, "#{FROM_EMAIL}")' app/mailers/application_mailer.rb`
+  - [ ] `git add *.rb && git commit -m "Configure email defaults" && git push`
+
 - Maintain a bash history of locally executed commands, add to .gitignore
   - [ ] `touch .bash_history`
   - [ ] `echo ".bash_history" >> .gitignore`
@@ -43,17 +47,12 @@
         ```
     - Alternatives Add alert and notice: `ruby -pi -e 'gsub(/<body>/, %q[<body>\n    <p class="notice"><%= notice %></p>\n    <p class="alert"><%= alert %></p>])' app/views/layouts/application.html.erb`
   - [ ] Add root "home#index" in routes.rb: `ruby -pi -e 'gsub(/# root "posts#index"/, %q[root \"home#index\"])' config/routes.rb`
+  - [ ] `ruby -pi -e 'gsub(/please.*@example.com/, "#{FROM_EMAIL}")' config/initializers/devise.rb`
   - [ ] `exec rubocop -a`
   - [ ] `git add . && git commit -m "Add devise" && git push`
 
-  - Configure email defaults:
-    - [ ] `ruby -pi -e 'gsub(/from@example.com/, "#{FROM_EMAIL}")' app/mailers/application_mailer.rb`
-    - [ ] `ruby -pi -e 'gsub(/please.*@example.com/, "#{FROM_EMAIL}")' config/initializers/devise.rb`
-    - [ ] `git add *.rb && git commit -m "Configure email defaults" && git push`
-
-  - [ ] `code .`
-
-  - [ ] Manually review the generated code
+  - [ ] Start Visual Studio: `code .`
+    - [ ] Manually review the generated code
 
   - Add Picocss
     - [ ] `yarn add @picocss/pico`
