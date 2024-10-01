@@ -38,6 +38,12 @@ RSpec.describe Baker do
     end
   end
 
+  describe 'unindent_common_whitespace' do
+    it 'removes common whitespace from the beginning of each line' do
+      expect(Baker.new.unindent_common_whitespace("  test\n test2")).to eq(" test\ntest2")
+    end
+  end
+
   describe '#run' do
     before do
       @baker = Baker.new
