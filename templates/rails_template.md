@@ -56,14 +56,11 @@
 
   - Add Picocss
     - [ ] `yarn add @picocss/pico`
-    - [ ] `echo '\n//Use Picocss\nimport "@picocss/pico"' >> app/javascript/application.js`
+    - [ ] `echo '\n// Use Picocss\nimport "@picocss/pico"' >> app/javascript/application.js`
     - Update application.css to accommodate esbuild creating application.css now:
       - [ ] Move application.css out of the way to prevent conflict with esbuild: `mv app/assets/stylesheets/application.css app/assets/stylesheets/application2.css`
-      - [ ] Link application2.css from application.html.erb: `inject_into_file "app/views/layouts/application.html.erb", after: '<%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>\n', '<%= stylesheet_link_tag "application2", "data-turbo-track": "reload" %>'`
-    - [ ] Wrap body content in a main container:
-      - [ ] `ruby -pi -e 'gsub(/<body>/, %q[<body><main class="container">])' app/views/layouts/application.html.erb`
-      - [ ] `ruby -pi -e 'gsub(/<\\/body>/, %q[<\/main><\/body>])' app/views/layouts/application.html.erb`
-    - [ ] Append Custom Picocss CSS import to `application.js`: `append_to_file "app/javascript/application.js", 'import "../assets/stylesheets/picocss.css"`
+      - [ ] Link application2.css from application.html.erb: ``inject_into_file "app/views/layouts/application.html.erb", %(    <%= stylesheet_link_tag "application2", "data-turbo-track": "reload" %>\n), after: %Q(<%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>\n)``
+    - [ ] Append Custom Picocss CSS import to `application.js`: ``append_to_file "app/javascript/application.js", 'import "../assets/stylesheets/picocss.css"'``
     - [ ] Create `app/assets/stylesheets/picocss.css` with custom CSS for alerts: ```create_file "app/assets/stylesheets/picocss.css", <<~CSS
         /**
         * Custom PicoCSS styles here. Included via app/javascript/application.js
@@ -116,17 +113,23 @@
         }
 
         @import "@picocss/pico";
-        CSS  
+      CSS
       ```
+    - Wrap body content in a main container:
+      - [ ] `ruby -pi -e 'gsub(/<body>/, %q[<body>\n    <main class="container">])' app/views/layouts/application.html.erb`
+      - [ ] `ruby -pi -e 'gsub(/<\\/body>/, %q[  <\/main>\n  <\/body>])' app/views/layouts/application.html.erb`
     - [ ] Replace flash messages in `application.html.erb`:```
-      gsub_file "app/views/layouts/application.html.erb", %r{<p class="notice"><%= notice %></p>\s*<p class="alert"><%= alert %></p>}, <<~ERB
-        <%= content_tag :div, notice, class: "alert alert-warning" if notice.present? %>
-        <%= content_tag :div, alert, class: "alert alert-danger" if alert.present? %>
-      ERB
+      gsub_file "app/views/layouts/application.html.erb", 
+        %r{    <p class="notice"><%= notice %></p>\s*<p class="alert"><%= alert %></p>\n    <%= yield %>\n}, 
+        <<~ERB.indent(6)
+          <%= content_tag :div, notice, class: "alert alert-warning" if notice.present? %>
+          <%= content_tag :div, alert, class: "alert alert-danger" if alert.present? %>
+          <%= yield %>
+        ERB
       ```
     - [ ] Insert navigation header after `<body>`:```
           inject_into_file "app/views/layouts/application.html.erb", after: "<body>\n" do
-            <<~HTML
+            <<~HTML.indent(4)
               <header class="container">
                 <nav>
                   <ul>
@@ -162,8 +165,8 @@
           end
           ```
     - [ ] Insert footer: ```
-          inject_into_file "app/views/layouts/application.html.erb", before: "</body>" do
-            <<~HTML
+          inject_into_file "app/views/layouts/application.html.erb", before: "  </body>" do
+            <<~HTML.indent(4)
               <footer class="container">
                 <p><%= year_of_launch = #{Time.now.year}; year_of_launch == Time.now.year ? "" : "\#{year_of_launch} -"%><%= Time.now.year %> #{APP_NAME.capitalize}©</p>
               </footer>
