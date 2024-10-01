@@ -29,7 +29,7 @@ class Baker
 
         opts.on('-d', '--diff', 'Show diff of the bake file to its template') do
           @diff_mode = true
-          puts "Diff mode enabled".yellow
+          puts "Diff mode enabled".yellow if $stdout.tty?
         end
 
         opts.on('-i', '--interactive', 'Enable interactive mode') do
@@ -94,7 +94,8 @@ class Baker
     Tempfile.open("#{File.basename(@file_name)}_unbaked") do |tempfile|
       tempfile.write(to_write)
       tempfile.flush
-      puts `git diff --color #{template_source_file} #{tempfile.path}`
+      # If attached to a tty, show color diff/word diff
+      puts `git diff #{"--word-diff --color" if $stdout.tty?} #{template_source_file} #{tempfile.path}`
     end
   end
 
