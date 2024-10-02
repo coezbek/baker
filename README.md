@@ -148,6 +148,14 @@ This will execute the file from the top to the bottom, stopping at each todo (ba
       - Note: The Rails Generator Method/Action are included in scope of the triple backtick Ruby code blocks for convenience.
       - Note: The Rails Generator Methods do not return errors in many situations, but just print red text! Beware!
 
+## Workflow when developing your own templates
+
+While creating templates to reuse for your own projects, you will usually start with a generic template (i.e. `template.md`) and then instantiate it for a specific project (i.e. `my_project.md`). By using the `::template` directive, this is easy.
+
+You will then continue to work with the specific instance and likely find many things which are applicable to the generic template.
+
+To merge your changes back, you can use run `baker --diff my_project.md > patch template.md`. This will read your `my_project` file and for the purpose of comparing mark the todos as unfinished (`[ ]`) and write a normal `git diff` to stdout. 
+
 ## Note on Security
 
 Running Baker templates involves executing shell commands on your machine. Always review templates before running them to ensure they are safe.
