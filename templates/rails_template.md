@@ -135,15 +135,14 @@
       - [ ] `ruby -pi -e 'gsub(/<body>/, %q[<body>\n    <main class="container">])' app/views/layouts/application.html.erb`
       - [ ] `ruby -pi -e 'gsub(/<\\/body>/, %q[  <\/main>\n  <\/body>])' app/views/layouts/application.html.erb`
     - [ ] Add partial for flash messages: ```create_file "app/views/application/_flash.html.erb", <<~ERB
-            <% 
-              # Render with: <%= render partial: "error", locals: { error_key: ..., errors_to_print: ... } %>
+            <% # Render with: render partial: "error", locals: { error_key: ..., errors_to_print: ... }
               errors_to_print = Array(errors_to_print)
               if errors_to_print.any? 
             %>
               <div id="<%= error_key %>_explanation">
                 <% errors_to_print.each do |message| %>
                 <p>
-                  <%= simple_format(message, wrapper_tag: "div", class: "alert alert-#{error_key}") %>
+                  <%= simple_format(message, wrapper_tag: "div", class: "alert alert-\#{error_key}") %>
                 </p>
                 <% end %>
               </div>
