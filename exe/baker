@@ -1,2 +1,2 @@
 require 'baker'
-Baker.new.run
+Baker.new.run_safe

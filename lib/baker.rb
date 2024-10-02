@@ -70,8 +70,9 @@ class Baker
       exit(1)
     end
 
-    puts "Bake File: #{@file_name}".yellow if @debug
+    @original_dir = Dir.pwd
 
+    puts "Bake File: #{@file_name}".yellow if @debug
 
     return nil
   end
@@ -119,6 +120,21 @@ class Baker
       # If attached to a tty, show color diff/word diff
       puts `git diff #{"--word-diff --color" if $stdout.tty?} #{template_source_file} #{tempfile.path}`
     end
+  end
+
+  def run_safe
+
+    run
+  
+  rescue SystemExit
+    # fall through
+  rescue Exception => e
+    puts 
+    puts e.full_message(highlight: true, order: :bottom)
+
+    puts
+    require 'pathname'
+    puts " → Please fix the error and run `baker #{Pathname.new(@file_name).relative_path_from(@original_dir) }` to continue.".yellow
   end
 
   def run
@@ -487,5 +503,5 @@ class Baker
 end
 
 if __FILE__==$0
-  Baker.new.run
+  Baker.new.run_safe
 end
