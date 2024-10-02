@@ -11,3 +11,6 @@ rails-bug/*
 /pkg/
 /spec/reports/
 /tmp/
+/.bash_history
+Gemfile.bak
+.Gemfile
