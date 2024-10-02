@@ -2,16 +2,19 @@
 
 require_relative "baker/version"
 
+# stdlib
 require 'optparse'
 require 'tempfile'
 require 'fileutils'
 require 'ostruct'
+
+# gems
 require 'rails/generators'
 require 'vtparser'
 require "tty-prompt"
 require 'rainbow/refinement' # for string colors 
 using Rainbow
-require 'ap'
+
 require_relative 'baker/bakerlib'
 require_relative 'baker/bakeractions'
 
@@ -62,7 +65,13 @@ class Baker
     @file_name = ARGV.shift || 'template.md'
     @file_name = File.expand_path(@file_name)
 
+    if !File.exist?(@file_name)
+      puts "Error: File #{@file_name} does not exist.".red
+      exit(1)
+    end
+
     puts "Bake File: #{@file_name}".yellow if @debug
+
 
     return nil
   end
