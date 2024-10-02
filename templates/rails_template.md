@@ -224,6 +224,19 @@
       - references
     - [ ] `rails generate scaffold Event name:string date:datetime location:string description:text event_type:string 'leg1distance:decimal{6,3}' 'leg2distance:decimal{6,3}' 'leg3distance:decimal{6,3}'`
     - [ ] `rails generate scaffold Participation user:references event:references planned:boolean performed:boolean`
+    - [ ] Ensure participations are deleted when user or event is deleted: ```
+        inject_into_file "app/models/user.rb", "  has_many :participations, dependent: :destroy\n", after: "ApplicationRecord\n" 
+        inject_into_file "app/models/event.rb", "  has_many :participations, dependent: :destroy\n", after: "ApplicationRecord\n"
+        ```
+    - [ ] Ensure integration tests continue to work: ```
+        ['events', 'participations'].all? { |s| 
+          gsub_file "test/controllers/#{s}_controller_test.rb", /setup do/, <<~RUBY.indent(2)
+            include Devise::Test::IntegrationHelpers
+            setup do
+              sign_in users(:one)
+          RUBY
+        }
+        ```
     - [ ] `rails db:migrate`
     - [ ] `exec rubocop -a`
     - [ ] `rake test`
