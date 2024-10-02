@@ -30,6 +30,20 @@ This will sequentially execute the shell commands in the file, mark them as done
 
 You can find a real-world example of a Rails template in [`templates/rails_template.md`](templates/rails_template.md). This also installs `Devise`, `PicoCSS`, an admin interface, etc.
 
+## Installation
+
+To install Baker, run:
+
+```bash
+gem install bakerb
+```
+
+Then either create your own bake file or use one of the templates in the `templates` directory and run it with:
+
+```bash
+baker your_bake_file.md
+```
+
 ## Key Ideas
 
 - **Tinker Style**: Baker is designed to modify the bake file as you go. When Baker runs automated steps for you, it will mark them as done or prompt you to execute the steps manually and come back to tick them off yourself. Nothing prevents you from modifying the bake file yourself in any editor.
@@ -72,10 +86,9 @@ Example `rails_template.md`:
 
 ::var[APP_NAME]
 
-:::ruby
-# Markdown Container Block Directives marked with :::ruby are executed as Ruby code.
+- [ ] Codeblocks which start on a line with a ` - ` or ` - [ ] ` are executed as ruby code: ```
 puts APP_NAME
-:::
+```
 
 - [ ] Check if directory already exists: `(! [ -d "#{APP_NAME}" ] || (echo "Directory '#{APP_NAME}' already exists" && exit 1))`
 - Setup Rails
@@ -101,6 +114,13 @@ This will execute the file from the top to the bottom, stopping at each todo (ba
 
 ## Common Ways to Do Things
 
+- **Escaping**: Use the usual Ruby string escape rules: 
+  - Use double quotes for interpolation and single quotes for literals.
+  - Use `%Q()` and `%q()` if you don't want to escape double and single quotes and your text has properly balanced braces.
+  - Otherwise you can use `%{}`, `%<>`, `%[]` (also ensure that braces are balanced). Or `%+...+` or any other non-alphanumerical symbol.
+
+- **Aborting on Error**: Shell scripts trigger an error by returning a non-zero exit code. Ruby commands either should raise or return false from their last command to trigger an error.
+
 - **Run Commands Inside the Rails Console**: Use `rails runner` instead of piping commands into `rails console`.
 
   ```bash
@@ -125,6 +145,8 @@ This will execute the file from the top to the bottom, stopping at each todo (ba
     ```bash
     ruby -e 'require "rails/generators"; Rails::Generators::Base.new.inject_into_file "config/initializers/trestle.rb", "  config.before_action do |controller|\n    unless !current_user || current_user.has_role?(:admin)\n      flash[:alert] = \\"Administrator access required.\\"\n      redirect_to Trestle.config.root\n    end\n  end\n", before: /  # config.before_action do/'
     ```
+      - Note: The Rails Generator Method/Action are included in scope of the triple backtick Ruby code blocks for convenience.
+      - Note: The Rails Generator Methods do not return errors in many situations, but just print red text! Beware!
 
 ## Note on Security
 
@@ -138,8 +160,10 @@ Running Baker templates involves executing shell commands on your machine. Alway
 - [ ] Add a way to enable/skip subsections (indented todos).
 - [ ] Finalize README and add sections on how to install, develop, and contribute.
 
-## Change Log
+## Changelog
 
+### 0.1.0
+- Support running colorized/animated shell commands.
 - Support for diff mode (`-d, --diff`) to show the diff between the current bake file and the original template file.
 - Prevent overwriting a manually edited bake file.
 - Add support for the `::templateSource` directive.
