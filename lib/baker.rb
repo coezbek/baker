@@ -252,17 +252,23 @@ class Baker
           result = e
         end
 
-        if !result.is_a?(Exception)
-          puts "  → Successfully executed".green
-          line.mark_complete
-        else
+        if result == false
+          # We assume the ruby command outputted an error message
+          puts "  → Please fix the error or mark the todo as done.".red
+          exit 1
+        end
+
+        if result.is_a?(Exception)
           puts "  → Failed with error:".red
           puts result
           puts result.backtrace
           puts "  → Please fix the error or mark the todo as done.".red
           exit 1
         end        
-
+      
+        puts "  → Successfully executed".green
+        line.mark_complete
+      
       when :shell
         # system line.content
 
