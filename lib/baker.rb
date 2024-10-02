@@ -431,11 +431,20 @@ class Baker
 
         if result
           puts "  → Successfully executed".green
+          puts
           line.mark_complete
         else
-          puts "  → Failed with error:".red
-          puts $?
-          puts "  → Please fix the error or mark the todo as done.".red
+          error = $?.to_s
+
+          if error.length < 80 && !(error =~ /\n/)
+            puts "  → Failed with error: #{error}".red
+          else            
+            puts "  → Failed with error:".red
+            to_display = format_command(error, max_line_length = 160)
+            to_display = "\n#{to_display}\n " if to_display.scan(/\n/).length == 0
+            to_display = to_display.indent(1).gsub(/^/, '▐').indent(3)  
+            puts to_display.red
+          end
           exit 1
         end
 
