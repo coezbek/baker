@@ -10,3 +10,5 @@ gem "tty-reader", github: "piotrmurach/tty-reader" # path: "../tty-reader"
 gem "tty-prompt", "~> 0.23" # path: "../tty-prompt"
 
 gem "rails", "~> 7.0"
+
+gem "vtparser", "~> 0.1.0"

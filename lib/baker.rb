@@ -7,6 +7,7 @@ require 'tempfile'
 require 'fileutils'
 require 'ostruct'
 require 'rails/generators'
+require 'vtparser'
 require "tty-prompt"
 require 'rainbow/refinement' # for string colors 
 using Rainbow
@@ -243,8 +244,13 @@ class Baker
         #o.destination_root = Dir.pwd
         
         command = line.command
-        
-        puts (" → Executing ruby code: #{command.inspect}").yellow
+
+        # Apply indentation and any additional formatting
+        to_display = unindent_common_whitespace(format_command(command, max_line_length = 160))
+        line_will_break = to_display =~ /\n/ || to_display.length > 80
+        to_display = "\n#{to_display}\n" if line_will_break && to_display.scan(/\n/).length == 1
+        to_display = to_display.indent(1).gsub(/^/, '▐').indent(3) if line_will_break     
+        puts (" → Executing ruby code: #{"\n" if line_will_break}#{to_display}").yellow
 
         begin
           result = o.instance_eval(command)
@@ -280,11 +286,115 @@ class Baker
         o.singleton_class.define_singleton_method(:const_missing) { |name| o[name] }
 
         command = o.instance_eval("%(" + line.command + ")")
-        puts " → Executing shell command: #{command.inspect}".yellow
+
+        # Apply indentation and any additional formatting
+        to_display = format_command(command, max_line_length = 160)
+        line_will_break = to_display =~ /\n/ || to_display.length > 80
+        to_display = "\n#{to_display}\n" if line_will_break && to_display.scan(/\n/).length == 1
+        to_display = to_display.indent(1).gsub(/^/, '▐').indent(3) if line_will_break     
+        puts (" → Executing shell command: #{"\n" if line_will_break}#{to_display}").yellow
         
-        puts ">>>>>>".white
-        result = system(command, out: STDOUT) # , exception: true
-        puts ">>>>>>".white
+        mode = :ptyspawn_with_parser
+        
+        case mode
+          
+        when :system
+          puts ">>>>>>".white
+          # Bundler.with_clean_env {
+          result = system(command, out: STDOUT)
+          #}
+          puts ">>>>>>".white
+
+        when :open3 
+          
+          exit_status = nil
+          require 'open3'
+          Open3.popen2e(command) do |stdin, stdout_and_stderr, wait_thr|
+            stdout_and_stderr.each_line do |line|
+              # Remove trailing whitespace and apply formatting
+              formatted_line = line.rstrip.indent(2).gsub(/^/, '▐').indent(3)
+              puts formatted_line
+            end
+            exit_status = wait_thr.value
+          end
+          result = exit_status&.success?
+
+        when :ptyspawn_with_parser
+
+          require 'pty'
+          begin
+
+            line_indent = '   ▐  '
+            line_indent_width = line_indent.length
+            line_indent = line_indent.yellow
+            first_line_indent = true
+
+            parser = VTParser.new do |action, ch, n, a|
+              print line_indent if first_line_indent
+              first_line_indent = false
+
+              to_output = VTParser.to_ansi(action, ch, n, a)
+
+              case action
+              when :print, :execute, :put, :osc_put
+                if ch == "\n" || ch == "\r"
+                  print ch
+                  print line_indent
+                  next
+                end
+              when :csi_dispatch
+                if to_output == "\e[2K"
+                  print "\e[2K"
+                  print line_indent
+                  next
+                else
+                  if ch == 'G'
+                    # puts "to_output: #{to_output.inspect} action: #{action} ch: #{ch.inspect}"
+                    # && parser.params.size == 1
+                    print "\e[#{parser.params[0] + line_indent_width}G"
+
+                    next
+                  end
+                end
+              end
+
+              print to_output
+            end
+
+            PTY.spawn(command) do |stdout_and_stderr, stdin, pid|
+
+              Thread.new do
+                while pid != nil
+                  stdin.write(STDIN.readpartial(1024))
+                end
+              end
+
+              begin
+                stdout_and_stderr.winsize = [$stdout.winsize.first, $stderr.winsize.last - line_indent_width].max
+
+                stdout_and_stderr.each_char do |char|
+
+                  parser.parse(char)
+
+                end
+              rescue Errno::EIO
+                # End of output
+              end
+              Process.wait(pid)
+              pid = nil
+              exit_status = $?.exitstatus
+              result = exit_status == 0
+
+              # Clear the line, reset the cursor to the start of the line
+              print "\e[2K\e[1G"
+              
+            end
+          rescue PTY::ChildExited
+            # Child process has exited
+            result = true
+          end
+        end
+
         puts ""
 
         if result

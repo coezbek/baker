@@ -186,6 +186,7 @@ GEM
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     useragent (0.16.10)
+    vtparser (0.1.0)
     webrick (1.8.2)
     websocket-driver (0.7.6)
       websocket-extensions (>= 0.1.0)
@@ -202,6 +203,7 @@ DEPENDENCIES
   rainbow (~> 3.1)
   tty-prompt (~> 0.23)
   tty-reader!
+  vtparser (~> 0.1.0)
 
 BUNDLED WITH
    2.5.18
