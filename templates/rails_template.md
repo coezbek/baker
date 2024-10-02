@@ -66,12 +66,12 @@
         * Custom PicoCSS styles here. Included via app/javascript/application.js
         */ 
         :root {
-          --pico-amber-50: #fff8e1;
-          --pico-amber-900: #ff6f00;
           --pico-green-50: #e8f5e9;
           --pico-green-800: #1b5e20;
           --pico-red-50: #ffebee;
           --pico-red-900: #b71c1c;
+          --pico-blue-50: #cce5ff;
+          --pico-blue-900: #004085;
         }
 
         /* Alerts base style */
@@ -91,39 +91,53 @@
           padding-left: calc(var(--pico-form-element-spacing-vertical) * 2 + var(--pico-iconsize)); /* Use vertical padding also for left+right */
         }
 
-        /* Danger alert styles */
-        .alert-danger {
+        .alert-danger, .alert-alert {
           --pico-background-color: var(--pico-red-50);
           --pico-icon: var(--pico-icon-invalid);
           --pico-color: var(--pico-red-900);
         }
 
-        /* Warning alert styles */
-        .alert-warning {
-          --pico-background-color: var(--pico-amber-50);
-          --pico-icon: var(--pico-icon-invalid); /* url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23cc5d00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='8' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'%3E%3C/line%3E%3C/svg%3E"); */
-          --pico-color: #cc5d00; /* darkened amber-900 */
+        .alert-primary, .alert-notice {
+          --pico-background-color: var(--pico-blue-50);
+          --pico-icon: var(--pico-icon-valid);
+          --pico-color: var(--pico-blue-900);
         }
 
-        /* Success alert styles */
         .alert-success {
           --pico-background-color: var(--pico-green-50);
           --pico-icon: var(--pico-icon-valid);
           --pico-color: var(--pico-green-800);
         }
-
-        @import "@picocss/pico";
       CSS
       ```
     - Wrap body content in a main container:
       - [ ] `ruby -pi -e 'gsub(/<body>/, %q[<body>\n    <main class="container">])' app/views/layouts/application.html.erb`
-      - [ ] `ruby -pi -e 'gsub(/<\\/body>/, %q[  <\/main>\n  <\/body>])' app/views/layouts/application.html.erb`
+      - [ ] `ruby -pi -e 'gsub(/<\\/body>/, %q[  <\/main>\n  <\/body>])' app/views/application.html.erb`
+    - [ ] Add partial for flash messages: ```create_file "app/views/application/_flash.html.erb", <<~ERB
+            <% 
+              # Render with: <%= render partial: "error", locals: { error_key: ..., errors_to_print: ... } %>
+              errors_to_print = Array(errors_to_print)
+              if errors_to_print.any? 
+            %>
+              <div id="<%= error_key %>_explanation">
+                <% errors_to_print.each do |message| %>
+                <p>
+                  <%= simple_format(message, wrapper_tag: "div", class: "alert alert-#{error_key}") %>
+                </p>
+                <% end %>
+              </div>
+            <% end %>
+          ERB
+      ```
     - [ ] Replace flash messages in `application.html.erb`:```
       gsub_file "app/views/layouts/application.html.erb", 
         %r{    <p class="notice"><%= notice %></p>\s*<p class="alert"><%= alert %></p>\n    <%= yield %>\n}, 
         <<~ERB.indent(6)
-          <%= content_tag :div, notice, class: "alert alert-warning" if notice.present? %>
-          <%= content_tag :div, alert, class: "alert alert-danger" if alert.present? %>
+          <% if flash.any? %>
+            <% flash.each do |key, value| %>
+              <%= render partial: "flash", locals: { error_key: key, errors_to_print: value } %>
+            <% end %>
+          <% end %>
           <%= yield %>
         ERB
       ```
