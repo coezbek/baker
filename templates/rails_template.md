@@ -48,6 +48,27 @@
     - Alternatives Add alert and notice: `ruby -pi -e 'gsub(/<body>/, %q[<body>\n    <p class="notice"><%= notice %></p>\n    <p class="alert"><%= alert %></p>])' app/views/layouts/application.html.erb`
   - [ ] Add root "home#index" in routes.rb: `ruby -pi -e 'gsub(/# root "posts#index"/, %q[root \"home#index\"])' config/routes.rb`
   - [ ] `ruby -pi -e 'gsub(/please.*@example.com/, "#{FROM_EMAIL}")' config/initializers/devise.rb`
+  - [ ] Fix fixtures: ```gsub_file "test/fixtures/users.yml", /one: {}\n# column: value\n#\ntwo: {}\n# column: value/, <<~YAML
+        one:
+          email: "user_one@example.com"
+          encrypted_password: <%= Devise::Encryptor.digest(User, 'password123') %>
+          remember_created_at: <%= 2.days.ago %>
+          reset_password_sent_at: <%= 3.days.ago %>
+          reset_password_token: "<reset_token_hash_one>"
+          created_at: <%= 30.days.ago %>
+          updated_at: <%= Time.zone.now %>
+
+        two:
+          email: "user_two@example.com"
+          encrypted_password: <%= Devise::Encryptor.digest(User, 'password456') %>
+          remember_created_at: <%= 5.days.ago %>
+          reset_password_sent_at: <%= 6.days.ago %>
+          reset_password_token: "<reset_token_hash_two>"
+          created_at: <%= 60.days.ago %>
+          updated_at: <%= Time.zone.now %>
+        YAML
+      ```
+  - [ ] `rake test`
   - [ ] `exec rubocop -a`
   - [ ] `git add . && git commit -m "Add devise" && git push`
 
