@@ -19,7 +19,8 @@ class Recipe
     
     next_day = []
     multiline_ruby = nil
-    s.each_line { |line|
+    s.each_line.with_index { |line, index|
+      index += 1 # 1-based index
 
       if multiline_ruby
         if line =~ /^\s*```/
@@ -31,7 +32,8 @@ class Recipe
             type: :ruby, 
             task_marker: multiline_ruby[:task_marker], 
             command: multiline_ruby[:command].join, 
-            description: multiline_ruby[:description])
+            description: multiline_ruby[:description],
+            line_index: multiline_ruby[:line_index])
           
           multiline_ruby = nil
 
@@ -51,35 +53,35 @@ class Recipe
 
         case directive
         when "template"
-          j.steps << RecipeStep.new(line, type: :directive, directive_type: :template, content: content, attributes: attributes)
+          j.steps << RecipeStep.new(line, type: :directive, directive_type: :template, content: content, attributes: attributes, line_index: index)
         when "template_source"
-          j.steps << RecipeStep.new(line, type: :directive, directive_type: :template_source, content: content, attributes: attributes)
+          j.steps << RecipeStep.new(line, type: :directive, directive_type: :template_source, content: content, attributes: attributes, line_index: index)
         when "var"
-          j.steps << RecipeStep.new(line, type: :directive, directive_type: :var, content: content, attributes: attributes)
+          j.steps << RecipeStep.new(line, type: :directive, directive_type: :var, content: content, attributes: attributes, line_index: index)
         when "cd"
-          j.steps << RecipeStep.new(line, type: :directive, directive_type: :cd, content: content)
+          j.steps << RecipeStep.new(line, type: :directive, directive_type: :cd, content: content, line_index: index)
         else
           raise "Unknown directive: #{directive}"
         end
 
       elsif line =~ /^\s*(-\s+)?\[(.)\]\s*(?:(.*?):)?\s*`([^`]+)`/
 
-        j.steps << RecipeStep.new(line, type: :shell, task_marker: $2, command: $4, description: $3)
+        j.steps << RecipeStep.new(line, type: :shell, task_marker: $2, command: $4, description: $3, line_index: index)
 
       elsif line =~ /^\s*(-\s+)?\[(.)\]\s*(?:(.*?):)?\s*``([^`]+)``/
 
-        j.steps << RecipeStep.new(line, type: :ruby, task_marker: $2, command: $4, description: $3)
+        j.steps << RecipeStep.new(line, type: :ruby, task_marker: $2, command: $4, description: $3, line_index: index)
 
       elsif line =~ /^\s*(-\s+)?\[(.)\]\s(?:(.*?):)?\s*```(.*$)/m
       
-        multiline_ruby = {lines: [line], task_marker: $2, description: $3, command: [$4]}
+        multiline_ruby = {lines: [line], task_marker: $2, description: $3, command: [$4], line_index: index}
         
       elsif line =~ /^\s*(-\s+)?\[(.)\]\s*(.*)/
 
-        j.steps << RecipeStep.new(line, type: :manual, task_marker: $2, description: $3)
+        j.steps << RecipeStep.new(line, type: :manual, task_marker: $2, description: $3, line_index: index)
       
       else
-        j.steps << RecipeStep.new(line, type: :nop)
+        j.steps << RecipeStep.new(line, type: :nop, line_index: index)
       end
     }
 
@@ -116,8 +118,9 @@ class RecipeStep
   attr_accessor :lines
   attr_accessor :type
   attr_writer :attributes
+  attr_reader :line_index
 
-  def initialize(lines, type: , directive_type: nil, content: nil, attributes: nil, command: nil, task_marker: nil, description: nil)
+  def initialize(lines, type: , directive_type: nil, content: nil, attributes: nil, command: nil, task_marker: nil, description: nil, line_index: nil)
     if lines.is_a?(Array)
       @lines = lines
     else
@@ -130,6 +133,7 @@ class RecipeStep
     @command = command
     @task_marker = task_marker
     @description = description
+    @line_index = line_index
   end
 
   def delete

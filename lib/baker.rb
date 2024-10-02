@@ -273,7 +273,7 @@ class Baker
         # Apply indentation and any additional formatting
         to_display = unindent_common_whitespace(format_command(command, max_line_length = 160))
         line_will_break = to_display =~ /\n/ || to_display.length > 80
-        to_display = "\n#{to_display}\n" if line_will_break && to_display.scan(/\n/).length == 1
+        to_display = "\n#{to_display}\n" if line_will_break && to_display.scan(/\n/).length == 0
         to_display = to_display.indent(1).gsub(/^/, '▐').indent(3) if line_will_break     
         puts (" → Executing ruby code: #{"\n" if line_will_break}#{to_display}").yellow
 
@@ -285,7 +285,8 @@ class Baker
 
         if result == false
           # We assume the ruby command outputted an error message
-          puts "  → Please fix the error or mark the todo as done.".red
+          puts "  → Please fix the error or mark the todo as done.".red          
+          puts "      #{@file_name}:#{line.line_index}".red
           exit 1
         end
 
@@ -294,10 +295,12 @@ class Baker
           puts result
           puts result.backtrace
           puts "  → Please fix the error or mark the todo as done.".red
+          puts "      #{@file_name}:#{line.line_index}".red
           exit 1
         end        
       
         puts "  → Successfully executed".green
+        puts
         line.mark_complete
       
       when :shell
@@ -445,6 +448,8 @@ class Baker
             to_display = to_display.indent(1).gsub(/^/, '▐').indent(3)  
             puts to_display.red
           end
+          puts "  → Please fix the error or mark the todo as done:".red
+          puts "      #{@file_name}:#{line.line_index}".red
           exit 1
         end
 
@@ -466,6 +471,7 @@ class Baker
           line.mark_complete
         else
           puts "  → Please complete the task manually and run baker again".red
+          puts "      #{@file_name}:#{line.line_index}".red
           exit 1
         end
       end
