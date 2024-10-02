@@ -401,7 +401,7 @@ class Baker
               end
 
               begin
-                stdout_and_stderr.winsize = [$stdout.winsize.first, $stderr.winsize.last - line_indent_width].max
+                stdout_and_stderr.winsize = [$stdout.winsize.first, $stderr.winsize.last - line_indent_width]
 
                 stdout_and_stderr.each_char do |char|
 
