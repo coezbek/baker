@@ -207,6 +207,7 @@
             HTML
           end
           ```
+    - [ ] `exec rubocop -a`
     - [ ] `git add . && git commit -m "Add Picocss" && git push`
 
   - [ ] Add Basic Database Classes for your app below
@@ -224,6 +225,8 @@
     - [ ] `rails generate scaffold Event name:string date:datetime location:string description:text event_type:string 'leg1distance:decimal{6,3}' 'leg2distance:decimal{6,3}' 'leg3distance:decimal{6,3}'`
     - [ ] `rails generate scaffold Participation user:references event:references planned:boolean performed:boolean`
     - [ ] `rails db:migrate`
+    - [ ] `exec rubocop -a`
+    - [ ] `rake test`
     - [ ] `git add . && git commit -m "Add Basic Database Classes for Sisuman" && git push`
 
   - Add Trestle Admin
@@ -233,12 +236,14 @@
     - [ ] `rails g trestle:resource Competition`
     - [ ] `rails g trestle:resource Participation`
     - [ ] `rails db:migrate`
+    - [ ] `exec rubocop -a`
     - [ ] `git add . && git commit -m "Add Trestle Admin" && git push`
 
   - Trestle Auth
     - [ ] `bundle add trestle-auth`
     - [ ] `rails g trestle:auth:install User --devise`
     - [ ] `rails db:migrate`
+    - [ ] `exec rubocop -a`
     - [ ] `git add . && git commit -m "Add Trestle Auth" && git push`
 
   - Add Roles via Rolify
@@ -247,6 +252,7 @@
     - [ ] Cache roles: `ruby -pi -e 'sub(/rolify/, "rolify after_add: ->(u,_){ u.touch }, after_remove: ->(u,_){ u.touch }\n\n  def has_role?(*args)\n    Rails.cache.fetch([cache_key_with_version, '"'"'has_role?'"'"', *args]) { super }\n  end\n")' app/models/user.rb`
     - [ ] Ensure only Admin can access /admin path: `sed -i '/  # config.before_action do/i\\ \ config.before_action do |controller|\\n    unless !current_user || current_user.has_role?(:admin)\\n      flash[:alert] = "Administrator access required."\\n      redirect_to Trestle.config.root\\n    end\\n  end' config/initializers/trestle.rb`
     - [ ] `rails db:migrate`
+    - [ ] `exec rubocop -a`
     - [ ] `git add . && git commit -m "Add Roles via Rolify and allow only admin to access admin interface" && git push`
 
   - Create Admin User
@@ -257,5 +263,6 @@
     - [ ] `bundle add annotaterb --group development`
     - [ ] `rails g annotate_rb:install`
     - [ ] Run migration to create annotations: `rails db:migrate`
+    - [ ] `exec rubocop -a`
     - [ ] `git add . && git commit -m "Add AnnotateRb Gem" && git push`
     
