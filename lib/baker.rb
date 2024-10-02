@@ -8,7 +8,7 @@ require 'fileutils'
 require 'ostruct'
 require 'rails/generators'
 require "tty-prompt"
-require 'rainbow/refinement'
+require 'rainbow/refinement' # for string colors 
 using Rainbow
 require 'ap'
 require_relative 'baker/bakerlib'
