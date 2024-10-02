@@ -171,6 +171,7 @@ Running Baker templates involves executing shell commands on your machine. Alway
 ## Changelog
 
 ### 0.1.0
+- Output line numbers in the bake file when an error occurs, so you can easily jump to the offending task.
 - Support running colorized/animated shell commands.
 - Support for diff mode (`-d, --diff`) to show the diff between the current bake file and the original template file.
 - Prevent overwriting a manually edited bake file.
