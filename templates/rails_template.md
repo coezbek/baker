@@ -133,7 +133,7 @@
       ```
     - Wrap body content in a main container:
       - [ ] `ruby -pi -e 'gsub(/<body>/, %q[<body>\n    <main class="container">])' app/views/layouts/application.html.erb`
-      - [ ] `ruby -pi -e 'gsub(/<\\/body>/, %q[  <\/main>\n  <\/body>])' app/views/application.html.erb`
+      - [ ] `ruby -pi -e 'gsub(/<\\/body>/, %q[  <\/main>\n  <\/body>])' app/views/layouts/application.html.erb`
     - [ ] Add partial for flash messages: ```create_file "app/views/application/_flash.html.erb", <<~ERB
             <% 
               # Render with: <%= render partial: "error", locals: { error_key: ..., errors_to_print: ... } %>
