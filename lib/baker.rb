@@ -152,7 +152,8 @@ class Baker
 
             puts initial_value
 
-            if use_tty = true
+            use_tty = true
+            if use_tty
               line.attributes = TTY::Prompt.new.ask(" → Please enter your value for variable '#{line.content}':\n".yellow, value: initial_value)
             else
               puts " → Please enter your value for variable '#{line.content}':".yellow
