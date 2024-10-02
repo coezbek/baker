@@ -1,11 +1,12 @@
-GIT
-  remote: https://github.com/piotrmurach/tty-reader.git
-  revision: ac9257188cfd19f91f5386217ef29c218b9a83bd
+PATH
+  remote: .
   specs:
-    tty-reader (0.9.0)
-      tty-cursor (~> 0.7)
-      tty-screen (~> 0.8)
-      wisper (~> 2.0)
+    bakerb (0.1.0)
+      rails (~> 7.0)
+      rainbow (~> 3.1)
+      tty-prompt (~> 0.23)
+      tty-reader (~> 0.9)
+      vtparser (~> 0.1.0)
 
 GEM
   remote: https://rubygems.org/
@@ -182,6 +183,10 @@ GEM
     tty-prompt (0.23.1)
       pastel (~> 0.8)
       tty-reader (~> 0.8)
+    tty-reader (0.9.0)
+      tty-cursor (~> 0.7)
+      tty-screen (~> 0.8)
+      wisper (~> 2.0)
     tty-screen (0.8.2)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
@@ -199,11 +204,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  rails (~> 7.0)
-  rainbow (~> 3.1)
-  tty-prompt (~> 0.23)
-  tty-reader!
-  vtparser (~> 0.1.0)
+  bakerb!
 
 BUNDLED WITH
-   2.5.18
+   2.5.20
