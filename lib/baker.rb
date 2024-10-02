@@ -388,10 +388,16 @@ class Baker
 
             PTY.spawn(command) do |stdout_and_stderr, stdin, pid|
 
-              Thread.new do
+              thread = Thread.new do
+                STDIN.timeout = 0.1
                 while pid != nil
-                  stdin.write(STDIN.readpartial(1024))
+                  begin
+                    stdin.write(STDIN.read(1024))
+                  rescue IO::TimeoutError
+                    # No input / repeat
+                  end
                 end
+                STDIN.timeout = nil
               end
 
               begin
@@ -406,7 +412,8 @@ class Baker
                 # End of output
               end
               Process.wait(pid)
-              pid = nil
+              pid = nil # Signal to the input thread to exit
+              thread.join
               exit_status = $?.exitstatus
               result = exit_status == 0
 
