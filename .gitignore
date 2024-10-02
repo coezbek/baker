@@ -1,1 +1,13 @@
 baker_*.md
+rails-bug/*
+/sisuman*/*
+.bash_history
+/*.patch
+/.bundle/
+/.yardoc
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+/tmp/
