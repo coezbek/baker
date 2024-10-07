@@ -267,7 +267,7 @@ class Baker
 
         o.extend Forwardable
         o.def_delegators :rails_gen_base, :create_file, :copy_file, :inside, :environment, :gem, :generate, :git, :initializer, :lib, :rails_command, :rake, :route
-        o.def_delegators :myself, :inject_into_file, :append_file, :append_to_file, :insert_into_file, :gsub_file
+        o.def_delegators :myself, *BakerActions.instance_methods(false)
 
         #o.singleton_class.include(Thor::Actions)
         #o.singleton_class.include(Rails::Generators::Actions)
