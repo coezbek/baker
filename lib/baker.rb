@@ -52,6 +52,10 @@ class Baker
           @interactive = true
         end
 
+        opts.on('-f', '--fast-forward', 'Skip all completed steps') do
+          @fast_forward = true
+        end
+
         opts.on('-h', '--help', 'Displays Help') do
           puts opts
           exit
@@ -163,6 +167,14 @@ class Baker
     @context = { file_name: @file_name }
   
     @recipe.steps.each { |line|
+
+      # Skip all completed steps in fast forward mode
+      if line.type != :directive
+        if @fast_forward && line.completed?
+          next
+        end
+        @fast_forward = false
+      end
       
       if @debug
         puts "#{line.type} : #{line}"
