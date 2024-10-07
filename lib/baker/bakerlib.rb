@@ -68,7 +68,7 @@ class Recipe
 
         j.steps << RecipeStep.new(line, type: :shell, task_marker: $2, command: $4, description: $3, line_index: index)
 
-      elsif line =~ /^\s*(-\s+)?\[(.)\]\s*(?:(.*?):)?\s*``([^`]+)``/
+      elsif line =~ /^\s*(-\s+)?\[(.)\]\s*(?:(.*?):)?\s*``([^`].*?)``/
 
         j.steps << RecipeStep.new(line, type: :ruby, task_marker: $2, command: $4, description: $3, line_index: index)
 
