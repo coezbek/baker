@@ -317,9 +317,19 @@ class Baker
         require 'ostruct'
         o = OpenStruct.new(@context)
         o.singleton_class.define_singleton_method(:const_missing) { |name| o[name] }
-
+        
         command = o.instance_eval("%(" + line.command + ")")
 
+        if @context.has_key?('WRAP_COMMAND') && @context['WRAP_COMMAND'].to_s.strip != ""
+          context = @context.dup
+
+          context['COMMAND'] = command
+
+          o = OpenStruct.new(context)
+          o.singleton_class.define_singleton_method(:const_missing) { |name| o[name] }
+          command = o.instance_eval("%(" + @context['WRAP_COMMAND'] + ")")
+        end
+        
         # Apply indentation and any additional formatting
         to_display = format_command(command, max_line_length = 160)
         line_will_break = to_display =~ /\n/ || to_display.length > 80

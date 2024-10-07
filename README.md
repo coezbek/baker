@@ -69,6 +69,15 @@ The following directives are available:
 - `::template[name]`: Makes a copy of the currently running bake file, removes the `::template` directive, and saves it under the given name. Use this in generic templates to prevent Baker from editing the generic template.
   - The template directive is removed and replaced with the `::template_source` directive, which points to the original template file. You can use this together with command line option `--diff` to see what changes you have made to the original template.
 
+## Variables used by Baker
+
+A minimal set of variables is used by Baker to let you control its behavior:
+
+ - `WRAP_COMMAND`: If set to a non-nil value, Baker will wrap shell commands using the provided string value. Baker will provide the actual shell command as `COMMAND`. For example if `WRAP_COMMAND` is set to `ssh #{DEPLOY_HOST} -t "#{COMMAND.gsub('"', '\"')}"` then Baker will following commands on a remote server. In many situtations you need to escape double quotes. Use `:::var[WRAP_COMMAND]{}` to unset the variable. This could also be used to use another shell than `sh` which Ruby uses: `bash -c "#{COMMAND.gsub('"', '\"')}"`.
+
+ > [!IMPORTANT]
+ > The `WRAP_COMMAND` only applies to shell commands and not to Ruby code blocks.
+ 
 ## Expanded Example
 
 Example `rails_template.md`:
