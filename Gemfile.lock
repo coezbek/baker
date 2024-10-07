@@ -120,6 +120,7 @@ GEM
       timeout
     net-smtp (0.5.0)
       net-protocol
+    net-ssh (7.3.0)
     nio4r (2.7.3)
     nokogiri (1.16.7)
       mini_portile2 (~> 2.8.2)
@@ -205,6 +206,7 @@ PLATFORMS
 
 DEPENDENCIES
   bakerb!
+  net-ssh (~> 7.3)
 
 BUNDLED WITH
    2.5.20

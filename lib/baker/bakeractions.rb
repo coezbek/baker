@@ -22,6 +22,14 @@ module BakerActions
     return false
   end
 
+  #
+  # Returns the login-user for the given host or nil if none is defined in ~/.ssh/config
+  #
+  def user_for_host(host)
+    require 'net/ssh/config'
+    Net::SSH::Config.for(host)[:user]
+  end
+
   # Injects content (given either as second parameter or block) into destination file
   # at the position specified by a regex as either :before or :after.
   #

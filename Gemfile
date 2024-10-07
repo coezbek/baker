@@ -16,3 +16,4 @@ gemspec
 # 
 # gem "vtparser", "~> 0.1.0"
 # 
+gem "net-ssh", "~> 7.3"
