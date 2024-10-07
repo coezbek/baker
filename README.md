@@ -2,7 +2,7 @@
 
 Baker is a "Project Setup as Code" tool that allows you to specify the steps to set up a project, execute them, and track their progress.
 
-Baker uses Markdown syntax to define lists of steps to execute in order to set up a project. The steps can be a combination of shell commands and manual steps.
+Baker uses Markdown syntax to define lists of steps to execute in order to set up a project. The steps can be a combination of shell commands, ruby code and manual steps.
 
 For example, to set up a basic Rails project, you can create a `bake_rails.md` file with the following content:
 
@@ -11,12 +11,12 @@ For example, to set up a basic Rails project, you can create a `bake_rails.md` f
 
 - [ ] `rails new myapp -j esbuild`
 ::cd["myapp"]
-- [ ] `gh repo create --public --source=.`
+- [ ] Create Github repo privately: `gh repo create --private --source=.`
 - [ ] `echo "# Myapp Readme" >> README.md`
 - [ ] `git add .`
 - [ ] `git commit -m "rails new myapp"`
 - [ ] `git push --set-upstream origin main`
-- [ ] `code .`
+- [ ] Start Editor, e.g. VSCode: `code .`
 - [ ] Manually review the generated code
 ```
 
@@ -28,7 +28,7 @@ baker bake_rails.md
 
 This will sequentially execute the shell commands in the file, mark them as done (turning `[ ]` into `[x]`), and prompt you to manually execute the manual steps. You can stop the execution at any time by pressing `Ctrl+C` and resume execution later.
 
-You can find a real-world example of a Rails template in [`templates/rails_template.md`](templates/rails_template.md). This also installs `Devise`, `PicoCSS`, an admin interface, etc.
+You can find a real-world example of a Rails template in [`templates/rails_template.md`](templates/rails_template.md). This also installs `Devise`, `PicoCSS`, an admin interface and deploys using Dokku.
 
 ## Installation
 
@@ -171,11 +171,11 @@ Running Baker templates involves executing shell commands on your machine. Alway
 
 ## TODO
 
-- [ ] Add interactive mode (`baker -i`) to prompt each step before executing it.
-- [ ] Add forced interactive steps `- [ ]?` to prompt the user even if not running in interactive mode.
+- [ ] Add forced interactive steps `- [?]` to prompt the user even if not running in interactive mode.
 - [ ] Add steps that are always executed, even when rerunning the bake script.
 - [ ] Add a way to enable/skip subsections (indented todos).
 - [ ] Finalize README and add sections on how to install, develop, and contribute.
+- [ ] Integrate `https://www.shellcheck.net/` to check shell commands for common mistakes before running them.
 
 ## Changelog
 
