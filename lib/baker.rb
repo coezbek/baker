@@ -81,6 +81,12 @@ class Baker
 
     return "" if input.nil? || input.empty?
 
+    # Check if we received a ruby string literal, otherwise wrap it in %()
+    require 'ripper'
+    if Ripper.sexp(input)&.dig(1,0,0) != :string_literal
+      input = '%(' + input + ')'
+    end
+
     o = OpenStruct.new(@context)
     o.singleton_class.define_singleton_method(:const_missing) { |name| o[name] }
     
