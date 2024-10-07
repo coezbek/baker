@@ -370,7 +370,7 @@ class Baker
 
               case action
               when :print, :execute, :put, :osc_put
-                if ch == "\n" || ch == "\r"
+                if ch == "\r"
                   print ch
                   print line_indent
                   next
@@ -396,16 +396,26 @@ class Baker
 
             PTY.spawn(command) do |stdout_and_stderr, stdin, pid|
 
-              thread = Thread.new do
-                STDIN.timeout = 0.1
-                while pid != nil
-                  begin
-                    stdin.write(STDIN.read(1024))
-                  rescue IO::TimeoutError
-                    # No input / repeat
+              # Input Thread
+              input_thread = Thread.new do
+
+                STDIN.raw do |io|
+                  loop do
+                    break if pid.nil?
+                    begin
+                      if io.wait_readable(0.1)
+                        data = io.read_nonblock(1024)
+                        stdin.write data
+                      end
+                    rescue IO::WaitReadable
+                      # No input available right now
+                    rescue EOFError
+                      break
+                    rescue Errno::EIO
+                      break
+                    end
                   end
                 end
-                STDIN.timeout = nil
               end
 
               begin
@@ -421,7 +431,7 @@ class Baker
               end
               Process.wait(pid)
               pid = nil # Signal to the input thread to exit
-              thread.join
+              input_thread.join # Have to wait for the Thread to finish until we can proceed outputting text to the CLI
               exit_status = $?.exitstatus
               result = exit_status == 0
 
