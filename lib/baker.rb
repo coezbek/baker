@@ -259,8 +259,7 @@ class Baker
         @context[:rails_gen_base] = Rails::Generators::Base.new
         @context[:myself] = self
         o = Struct.new(*@context.keys).new(*@context.values)
-        # require 'ostruct'
-        # o = OpenStruct.new(@context)
+
         o.singleton_class.define_singleton_method(:const_missing) { |name| o[name] }
         o.define_singleton_method (:inspect) {
             "<#{self.class}: #{self.instance_variables.map{|v| "#{v}=#{instance_variable_get(v).inspect.truncate(100)}"}.join(", ")}>"
