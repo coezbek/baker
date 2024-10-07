@@ -230,6 +230,13 @@ class Baker
           o.singleton_class.define_singleton_method(:const_missing) { |name| o[name] }
 
           template_name_suggestion = o.instance_eval(line.content) || File.filename(@file_name)
+
+          if @interactive
+            puts " ? About to execute template directive. Press y/Y to continue. Any other key to cancel and exit baker.".yellow
+            puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
+  
+            exit(1) if prompt_abort(line) == :abort
+          end
           
           puts (" → Executing template directive. Creating file: " + template_name_suggestion).yellow
 
@@ -287,7 +294,15 @@ class Baker
         to_display = unindent_common_whitespace(format_command(command, max_line_length = 160))
         line_will_break = to_display =~ /\n/ || to_display.length > 80
         to_display = "\n#{to_display}\n" if line_will_break && to_display.scan(/\n/).length == 0
-        to_display = to_display.indent(1).gsub(/^/, '▐').indent(3) if line_will_break     
+        to_display = to_display.indent(1).gsub(/^/, '▐').indent(3) if line_will_break
+        
+        if @interactive
+          puts " → About to execute ruby code: #{"\n" if line_will_break}#{to_display}".yellow
+          puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
+
+          exit(1) if prompt_abort(line) == :abort
+        end
+
         puts (" → Executing ruby code: #{"\n" if line_will_break}#{to_display}").yellow
 
         begin
@@ -342,7 +357,15 @@ class Baker
         to_display = format_command(command, max_line_length = 160)
         line_will_break = to_display =~ /\n/ || to_display.length > 80
         to_display = "\n#{to_display}\n" if line_will_break && to_display.scan(/\n/).length == 1
-        to_display = to_display.indent(1).gsub(/^/, '▐').indent(3) if line_will_break     
+        to_display = to_display.indent(1).gsub(/^/, '▐').indent(3) if line_will_break
+
+        if @interactive
+          puts " → About to execute shell code: #{"\n" if line_will_break}#{to_display}".yellow
+          puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
+
+          exit(1) if prompt_abort(line) == :abort
+        end
+
         puts (" → Executing shell command: #{"\n" if line_will_break}#{to_display}").yellow
         
         mode = :ptyspawn_with_parser
@@ -496,17 +519,12 @@ class Baker
         puts line.description
 
         puts
-        puts " → Please enter: y/Y/x/./<space> to mark complete and continue or any other key to do nothing and exit".yellow
-        input = STDIN.gets()
+        puts " → Please enter: y/Y to mark complete and continue or any other key to do nothing and exit".yellow
+    
+        exit(1) if prompt_abort(line) == :abort
+    
+        line.mark_complete
 
-        case input.strip.downcase
-        when 'y', 'x', '.', ' '
-          line.mark_complete
-        else
-          puts "  → Please complete the task manually and run baker again".red
-          puts "      #{@file_name}:#{line.line_index}".red
-          exit 1
-        end
       end
 
       save
@@ -514,6 +532,25 @@ class Baker
 
     puts " → All steps completed.".green
 
+  end
+
+  #
+  # Interact with the user to confirm the manual step has been completed/the user wants to continue.
+  #
+  def prompt_abort(line)
+    begin
+      answer = STDIN.gets().strip.downcase
+    rescue Interrupt
+      answer = 'n'
+    end
+    if answer != 'y'
+      require 'pathname'
+      puts 
+      puts (' → Aborting as requested. Run `baker ' + Pathname.new(@file_name).relative_path_from(@original_dir).to_s + '` to continue.').green
+      puts "   Current task: #{@file_name}:#{line.line_index}".green
+      return :abort
+    end
+    return :continue
   end
 
   def save
