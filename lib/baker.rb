@@ -181,8 +181,8 @@ class Baker
             puts ""
 
             initial_value = expand_vars((line.attributes || "").sub(/^\s*default\s*=\s*/, ''))
-
-            puts initial_value
+            
+            raise "Initial value couldn't be determined for variable '#{line.content}'" if initial_value.nil?
 
             use_tty = true
             if use_tty
