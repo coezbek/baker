@@ -246,8 +246,9 @@
     - [ ] `bundle add trestle`
     - [ ] `rails g trestle:install`
     - [ ] `rails g trestle:resource User`
-    - [ ] `rails g trestle:resource Competition`
+    - [ ] `rails g trestle:resource Event`
     - [ ] `rails g trestle:resource Participation`
+    - [ ] ``gsub_file "config/initializers/trestle.rb", '# config.root = "/"', 'config.root = "/"'``
     - [ ] `rails db:migrate`
     - [ ] `exec rubocop -a`
     - [ ] `git add . && git commit -m "Add Trestle Admin" && git push`
@@ -263,7 +264,7 @@
     - [ ] `bundle add rolify`
     - [ ] `rails g rolify Role User`
     - [ ] Cache roles: `ruby -pi -e 'sub(/rolify/, "rolify after_add: ->(u,_){ u.touch }, after_remove: ->(u,_){ u.touch }\n\n  def has_role?(*args)\n    Rails.cache.fetch([cache_key_with_version, '"'"'has_role?'"'"', *args]) { super }\n  end\n")' app/models/user.rb`
-    - [ ] Ensure only Admin can access /admin path: `sed -i '/  # config.before_action do/i\\ \ config.before_action do |controller|\\n    unless !current_user || current_user.has_role?(:admin)\\n      flash[:alert] = "Administrator access required."\\n      redirect_to Trestle.config.root\\n    end\\n  end' config/initializers/trestle.rb`
+    - [ ] Ensure only Admin can access /admin path: `sed -i '/  # config.before_action do/i\\ \ config.before_action do |controller|\\n    if !current_user || !current_user.has_role?(:admin)\\n      flash[:alert] = "Administrator access required."\\n      redirect_to Trestle.config.root\\n    end\\n  end' config/initializers/trestle.rb`
     - [ ] `rails db:migrate`
     - [ ] `exec rubocop -a`
     - [ ] `git add . && git commit -m "Add Roles via Rolify and allow only admin to access admin interface" && git push`
