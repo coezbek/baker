@@ -311,7 +311,7 @@ class Baker
         puts (" → Executing ruby code: #{"\n" if line_will_break}#{to_display}").yellow
 
         begin
-          result = o.instance_eval(command)
+          result = o.instance_eval(command, @file_name, line.line_index)
         rescue Exception => e
           result = e
         end
@@ -355,7 +355,7 @@ class Baker
 
           o = OpenStruct.new(context)
           o.singleton_class.define_singleton_method(:const_missing) { |name| o[name] }
-          command = o.instance_eval("%(" + @context['WRAP_COMMAND'] + ")")
+          command = o.instance_eval("%(" + @context['WRAP_COMMAND'] + ")", @file_name, line.line_index)
         end
         
         # Apply indentation and any additional formatting

@@ -181,7 +181,7 @@ Running Baker templates involves executing shell commands on your machine. Alway
 
 ### Unreleased
 
-- Output line numbers in the bake file when an error occurs, so you can easily jump to the offending task.
+- Output line numbers in the bake file when an error occurs, so you can easily jump to the offending task (incl. when interpolating)
 - Introduce WRAP_COMMAND to allow wrapping shell commands in a custom command (e.g. `ssh -t`)
 - Add support for '-f', '--fast-forward' to printing of completed steps.
 - Add interactive mode (`baker -i`) to prompt each step before executing it.
