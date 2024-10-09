@@ -299,7 +299,6 @@ class Baker
         to_display = to_display.gsub(/\s(?=\s*$)/, '·')
 
         to_display = to_display.indent(1).gsub(/^/, '▐').indent(3) if line_will_break
-
         
         if @interactive
           puts " → About to execute ruby code: #{"\n" if line_will_break}#{to_display}".yellow
