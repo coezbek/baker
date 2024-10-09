@@ -15,7 +15,7 @@
 - Setup rails
   - [ ] `rails new #{APP_NAME} -j esbuild`
 ::cd["#{APP_NAME}"]
-  - [ ] `gh repo create --public --source=.`
+  - [ ] Create Github Repo privately: `gh repo create --private --source=.`
   - [ ] `echo "# #{APP_NAME} Readme" >> README.md`
   - [ ] `rails db:migrate`
   - [ ] `git add .`
