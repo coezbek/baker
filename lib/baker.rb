@@ -294,7 +294,12 @@ class Baker
         to_display = unindent_common_whitespace(format_command(command, max_line_length = 160))
         line_will_break = to_display =~ /\n/ || to_display.length > 80
         to_display = "\n#{to_display}\n" if line_will_break && to_display.scan(/\n/).length == 0
+        
+        # Replace all trailing whitespace with · 
+        to_display = to_display.gsub(/\s(?=\s*$)/, '·')
+
         to_display = to_display.indent(1).gsub(/^/, '▐').indent(3) if line_will_break
+
         
         if @interactive
           puts " → About to execute ruby code: #{"\n" if line_will_break}#{to_display}".yellow
@@ -357,6 +362,10 @@ class Baker
         to_display = format_command(command, max_line_length = 160)
         line_will_break = to_display =~ /\n/ || to_display.length > 80
         to_display = "\n#{to_display}\n" if line_will_break && to_display.scan(/\n/).length == 1
+        
+        # Replace all trailing whitespace with · 
+        to_display = to_display.gsub(/\s(?=\s*$)/, '·')
+        
         to_display = to_display.indent(1).gsub(/^/, '▐').indent(3) if line_will_break
 
         if @interactive
