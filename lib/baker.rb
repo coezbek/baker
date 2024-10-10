@@ -56,6 +56,10 @@ class Baker
           @fast_forward = true
         end
 
+        opts.on('--no-save', 'Do not save any changes to the bake file') do
+          @no_save = true
+        end
+
         opts.on('-h', '--help', 'Displays Help') do
           puts opts
           exit
@@ -562,6 +566,8 @@ class Baker
   end
 
   def save
+
+    return if @no_save
     
     to_write = @recipe.to_s
 

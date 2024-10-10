@@ -202,6 +202,9 @@ baker [options] [file]
 Options:
 - `-v`, `--verbose`: Print more information about what Baker is doing.
 - `-d`, `--diff`: Show the diff between the current bake file and the original template file.
+- `-i`, `--interactive`: Prompt before executing each step.
+- `-f`, `--fast-forward`: Don't print completed steps again
+- `--no-save`: Don't save any changes to the bake file. CAUTION: Tasks will still be run!
 
 ## Related Works
 
