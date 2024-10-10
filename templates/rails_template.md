@@ -72,20 +72,118 @@
   - [ ] `exec rubocop -a`
   - [ ] `git add . && git commit -m "Add devise" && git push`
 
+  - Add some useful Rails extensions (from my perspective):
+    - [ ] ```create_file "lib/tasks/esbuild_clobber.rake", <<~'RUBY'
+          namespace :esbuild do
+            desc "Remove esbuild build artifacts"
+            task :clobber do
+              rm_rf Dir["app/assets/builds/**/[^.]*.{js,js.map,css,css.map,ttf,woff2}"], verbose: false
+            end
+          end
+
+          if Rake::Task.task_defined?("assets:clobber")
+            Rake::Task["assets:clobber"].enhance(["esbuild:clobber"])
+          end
+        RUBY
+      ```
+    - [ ] ``` create_file "config/initializers/shorten_etag.rb", <<~'RUBY'
+          return if Rails.env.production?
+
+          module Sprockets 
+            class Asset
+
+              #
+              # Override etag to return more concise names in development 2^64 bit should be enough to prevent a collision (it is enough for esbuild)
+              #
+              def etag
+                version = environment_version
+
+                if version && version != ""
+                  DigestUtils.hexdigest(version + digest)[0, 10]
+                else
+                  DigestUtils.pack_hexdigest(digest)[0, 10]
+                end
+              end
+            end
+          end
+        RUBY
+      ```
+    - [ ] ```create_file "config/initializers/css_sourcemapping_url_process.rb", <<~'RUBY'
+          # config/initializers/css_sourcemapping_url_process.rb
+
+          # Rewrites source mapping urls with the digested paths and protect against semicolon appending with a dummy comment line
+          class CssSourcemappingUrlProcessor
+            REGEX = /(\/\*\s*#\s*sourceMappingURL=)(.*\.map)/
+
+            class << self
+              def call(input)
+                env     = input[:environment]
+                context = env.context_class.new(input)
+                filename = File.basename(input[:filename])
+
+                data = input[:data]
+                data = data.gsub(REGEX) do |match|
+                  start, sourcemap = $1, $2
+                  sourcemap_logical_path = combine_sourcemap_logical_path(sourcefile: input[:name], sourcemap: sourcemap)
+
+                  begin
+                    "#{start}#{sourcemap_asset_path(sourcemap_logical_path, context: context)}"
+                  rescue Sprockets::FileNotFound
+                    env.logger.warn "Sourcemap file not found: '#{sourcemap_logical_path}' for #{filename}"
+                    match # Return the original match - Better than nothing
+                  end
+                end
+
+                { data: data }
+              end
+
+            private
+              def combine_sourcemap_logical_path(sourcefile:, sourcemap:)
+                if (parts = sourcefile.split("/")).many?
+                  parts[0..-2].append(sourcemap).join("/")
+                else
+                  sourcemap
+                end
+              end
+
+              def sourcemap_asset_path(sourcemap_logical_path, context:)
+                # FIXME: Work-around for bug where if the sourcemap is nested two levels deep, it'll resolve as the source file
+                # that's being mapped, rather than the map itself. So context.resolve("a/b/c.js.map") will return "c.js?"
+                if context.resolve(sourcemap_logical_path) =~ /\.map/
+                  context.asset_path(sourcemap_logical_path)
+                else
+                  raise Sprockets::FileNotFound, "Failed to resolve source map asset due to nesting depth"
+                end
+              end
+            end
+          end
+
+          Sprockets.register_postprocessor "text/css", CssSourcemappingUrlProcessor
+        RUBY
+        ```
+    - [ ] `rake test`
+    - [ ] `exec rubocop -a`
+    - [ ] `git add . && git commit -m "Add my monkey patches for Rails" && git push`
+
   - [ ] Start Visual Studio: `code .`
     - [ ] Manually review the generated code
 
   - Add Picocss
     - [ ] `yarn add @picocss/pico`
-    - [ ] `echo '\n// Use Picocss\nimport "@picocss/pico"' >> app/javascript/application.js`
-    - Update application.css to accommodate esbuild creating application.css now:
-      - [ ] Move application.css out of the way to prevent conflict with esbuild: `mv app/assets/stylesheets/application.css app/assets/stylesheets/application2.css`
-      - [ ] Link application2.css from application.html.erb: ``inject_into_file "app/views/layouts/application.html.erb", %(    <%= stylesheet_link_tag "application2", "data-turbo-track": "reload" %>\n), after: %Q(<%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>\n)``
-    - [ ] Append Custom Picocss CSS import to `application.js`: ``append_to_file "app/javascript/application.js", 'import "../assets/stylesheets/picocss.css"'``
-    - [ ] Create `app/assets/stylesheets/picocss.css` with custom CSS for alerts: ```create_file "app/assets/stylesheets/picocss.css", <<~CSS
+    - [ ] Update application.css to accommodate esbuild creating application.css now: `mv app/assets/stylesheets/application.css app/assets/stylesheets/app.css`
+    - [ ] Import app.css and pico.css via js: ```append_file "app/javascript/application.js", <<~JS
+            // Application.css
+            import "../assets/stylesheets/app.css"
+
+            // Use Picocss
+            import "@picocss/pico/css/pico.css" // Rather than "@picocss/pico" which includes pico.min.css"
+            import "../assets/stylesheets/picocss.css"
+          JS
+        ```
+    - [ ] Create `app/assets/stylesheets/picocss.css` with custom CSS for Rails: ```create_file "app/assets/stylesheets/picocss.css", <<~CSS
         /**
-        * Custom PicoCSS styles here. Included via app/javascript/application.js
-        */ 
+         * Custom PicoCSS styles here. Included via app/javascript/application.js
+         */ 
         :root {
           --pico-green-50: #e8f5e9;
           --pico-green-800: #1b5e20;
@@ -128,6 +226,92 @@
           --pico-background-color: var(--pico-green-50);
           --pico-icon: var(--pico-icon-valid);
           --pico-color: var(--pico-green-800);
+        }
+
+        /* Prevent loading indicator from appearing on form elements */
+        form[aria-busy="true"]::before, turbo-frame[aria-busy="true"]::before {
+          display: none;
+        }
+
+        turbo-frame[aria-busy="true"] {
+          position: relative;
+        }
+
+        /* Apply loading styles only to turbo-frame elements */
+        [aria-busy="true"] button {
+          &::before {
+            content: "";
+            position: absolute;
+            display: block;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 1em;
+            height: 1em;
+            background-image: var(--pico-icon-loading); /* Ensure this variable is defined */
+            background-size: 1em auto;
+            background-repeat: no-repeat;
+            z-index: 2; /* Ensure the loading icon is above the overlay */
+          }
+        }
+
+        /* Remove margin-bottom from last button in a form */
+        [type=submit],
+        [type=reset],
+        [type=button] {
+          &:last-child {
+            margin-bottom: 0px;
+          }
+
+          /* Also remove if next input after button is a hidden input (for button_to helper) */
+          &:has(+ [type=hidden]) {
+            margin-bottom: 0px;
+          }
+        }
+
+        /* Highlight column */
+        .td-primary {
+          background-color: var(--pico-blue-50);
+        }
+
+        /* Styling for definition lists to match Pico CSS aesthetics */
+        article dl {
+          display: grid;
+          grid-template-columns: max-content 1fr;
+          gap: 0.5rem 1rem;
+        }
+
+        article dl dl { 
+          margin-bottom: 0px;
+        }
+
+        /* Style for the labels (dt elements) */
+        article dt {
+          margin: 0;
+          padding: var(--pico-form-element-spacing-vertical) 0;
+          font-weight: bold;
+          color: var(--pico-color);
+        }
+
+        /* Style for the data (dd elements) */
+        article dd {
+          --pico-background-color: var(--pico-form-element-background-color);
+          --pico-border-color: var(--pico-form-element-border-color);
+          --pico-color: var(--pico-form-element-color);
+          --pico-box-shadow: none;
+          margin: 0;
+          padding: var(--pico-form-element-spacing-vertical) var(--pico-form-element-spacing-horizontal);
+          border: var(--pico-border-width) solid var(--pico-border-color);
+          border-radius: var(--pico-border-radius);
+          background-color: var(--pico-background-color);
+          color: var(--pico-color);
+          font-weight: var(--pico-font-weight);
+          line-height: var(--pico-line-height);
+          transition:
+            background-color var(--pico-transition),
+            border-color var(--pico-transition),
+            color var(--pico-transition),
+            box-shadow var(--pico-transition);
         }
       CSS
       ```
@@ -212,7 +396,8 @@
 
   - [ ] Add Basic Database Classes for your app below
     - Either use `generate model` or `generate scaffold`
-    - Field names should not include: `type`, `id`, (`hash` or other existing ruby object method names), `created_at|on`, `updated_at|on`, `deleted_at`, `lock_version`, `position`, `parent_id`, `lft`, `rgt`, `quote_value`
+    - Field names should not include: `type`, `id`, (`hash` or other existing ruby object method names), `created_at|on`, `updated_at|on`, `deleted_at`, `lock_version`, `position`, `parent_id`, `lft`, `rgt`, `quote_value`, `request`, `record`...
+      - Check: https://stackoverflow.com/questions/13750009/reserved-names-with-activerecord-models
     - Use the following types for the fields:
       - string
       - text
@@ -279,4 +464,151 @@
     - [ ] Run migration to create annotations: `rails db:migrate`
     - [ ] `exec rubocop -a`
     - [ ] `git add . && git commit -m "Add AnnotateRb Gem" && git push`
-    
+
+  - Install Better Errors with VSCode Integration
+    - [ ] `bundle add better_errors binding_of_caller --group development`
+    - [ ] Set Editor (WSL): ```create_file "config/initializers/better_errors.rb", <<~RUBY
+          if defined?(BetterErrors) && (distro_name = ENV['WSL_DISTRO_NAME'])
+            BetterErrors.editor = "vscode://vscode-remote/wsl+\#{distro_name}%{file_unencoded}:%{line}"
+          end
+        RUBY
+        ```
+    - [ ] `exec rubocop -a`
+    - [ ] `git add . && git commit -m "Add Better Errors" && git push`
+
+  - Add Font Awesome
+    - [ ] `yarn add @fortawesome/fontawesome-free`
+    - [ ] `echo '\n\n// Use Font Awesome\nimport "@fortawesome/fontawesome-free/css/all"' >> app/javascript/application.js`
+    - [ ] Add ttf/woff2 to esbuild: ``inject_into_file "package.json", '--loader:.ttf=file --loader:.woff2=file ', after: 'esbuild app/javascript/*.* '``
+    - [ ] Ensure file are marked as digested: ``inject_into_file "package.json", '--asset-names=[name]-[hash].digested ', after: 'esbuild app/javascript/*.* '``
+      - See: https://github.com/evanw/esbuild/issues/2092
+    - [ ] Remove --public-path: ``gsub_file "package.json", / --public-path=\/assets/, ""``
+    - [ ] `exec rubocop -a`
+    - [ ] `git add . && git commit -m "Add Font Awesome" && git push`
+
+  - Customize Home Page
+    - [ ] Edit `app/views/home/index.html.erb` to show a welcome message and a link to the events page
+
+  - Prepare app for deployment with Dokku + Postgres:
+    - [ ] `bundle add pg --group production`
+    - [ ] Disable sqlite for production: ``gsub_file "Gemfile", /gem "sqlite3".*$/, '\0, group: [:development, :test]'``
+    - [ ] Swap sqlite for pg in Dockerfile: ``gsub_file "Dockerfile", /sqlite3/, 'postgresql-client'``
+    - [ ] Add libpq-dev: ``gsub_file "Dockerfile", /build-essential git/, '\0 libpq-dev'``
+    - [ ] Update database.yml: ```gsub_file "config/database.yml", /# SQLite3 write its.*persistent\/storage\/production.sqlite3/m, <<~JSON
+          production:
+            adapter: postgresql
+            encoding: unicode
+            pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+            url: <%= ENV['DATABASE_URL'] %>
+        JSON
+        ```
+    - [ ] Make Docker build less noisy: ``gsub_file "Dockerfile", /apt-get install/,  'apt-get -qq install'``
+    - [ ] Make Docker build less noisy: ``gsub_file "Dockerfile", /apt-get update -qq/,  'apt-get -qq update'``
+    - [ ] Add app.json to include health-checks for Rails (db:migration is part of the Dockerfile): ```create_file "app.json", <<~JSON
+        {
+          "name": "#{APP_NAME}",
+          "healthchecks": {
+            "web": [
+              {
+                  "type": "startup",
+                  "name": "#{APP_NAME} /up check",
+                  "path": "/up"
+              }
+            ]
+          }
+        }
+        JSON
+        ```
+    - [ ] `exec rubocop -a`
+    - [ ] `git add . && git commit -m "Prepare for production" && git push`
+
+  - Deploy with Dokku
+    - Dokku is a self-hosted platform as a service (PaaS) that allows you to deploy your applications with a simple `git push` to your server.
+    - Since Rails 7 comes with a `Dockerfile`, Dokku is using Docker for your app and NOT Heroku's buildpacks.
+    - To use Dokku you need a server (assuming Ubuntu below) you can SSH into and install Dokku on.
+    - By default this won't be the same as #{HOST_NAME}
+::var[DEPLOY_HOST]{vps.oezbek.app}
+    - [ ] Add [default user name for DEPLOY_HOST](https://stackoverflow.com/q/10197559/278842): ```
+        if !user_for_host("#{DEPLOY_HOST}")
+          puts "What user name should be used to ssh to #{DEPLOY_HOST}?"
+          puts "Enter it here or manually add it to ~/.ssh/config."
+          user_name = STDIN.gets.chomp
+          File.open("#{Dir.home}/.ssh/config", "a") do |f|
+            f.puts
+            f.puts "Host #{DEPLOY_HOST}"
+            f.puts "  User #{user_name}"
+          end
+        end
+        ```
+
+  - Ensure SSH key exists and is copied to the server:
+    - If you don't have an SSH Key: ssh-keygen -t rsa -b 4096 -C '#{FROM_EMAIL}' -N '' -f ~/.ssh/id_rsa
+    - [ ] Check for SSH key: `test -f ~/.ssh/id_rsa.pub`
+    - [ ] Add local user's SSH pub key to server: `ssh-copy-id #{DEPLOY_HOST}`
+      - Alternatively: ssh -o 'ConnectionAttempts 3' 
+
+::var[WRAP_COMMAND]{ssh #{DEPLOY_HOST} -t "#{COMMAND.gsub('"', '\"')}"}
+
+  - Standard Ubuntu Setup before Dokku:
+    - [ ] `sudo apt-get install unattended-upgrades`
+
+  - Install Dokku on the server:
+    - [ ] `sudo apt-get update`
+    - [ ] Install debconf-utils to be able to debconf-get-selections: `sudo apt-get install -y debconf-utils`
+    - Preconfigure Dokku installation:
+      - [ ] `echo "dokku dokku/vhost_enable boolean true" | sudo debconf-set-selections`
+      - [ ] `echo "dokku dokku/hostname string #{HOST_NAME}" | sudo debconf-set-selections`
+      - [ ] `echo "dokku dokku/skip_key_file boolean true" | sudo debconf-set-selections`
+      - [ ] Output configuration for apt: `sudo debconf-get-selections | grep dokku`
+    - [ ] Install latest Dokku (-N to override previous bootstrap.sh download): `wget -N https://dokku.com/bootstrap.sh ; sudo bash bootstrap.sh`
+    - [ ] Reboot remote: `nohup bash -c "sleep(1); reboot" &`
+    - [ ] Wait for reboot to complete/shell via ruby: `` sleep(20) ``
+    - [ ] Install Let's Encrypt plugin: `sudo dokku plugin:install https://github.com/dokku/dokku-letsencrypt.git`
+      - [ ] Install cron for auto-renew: `dokku letsencrypt:cron-job --add`
+    - [ ] Use same pub key for pushing as for login: `cat ~/.ssh/authorized_keys | dokku ssh-keys:add admin`
+      - Alternatively you could ask the user for which SSH key to use for deployment: ```
+        loop true
+          puts "Enter the path of the SSH pub key which you want to add for dokku `dokku ssh-keys:add`?"
+          puts "Press Enter to use the default key: ~/.ssh/id_rsa.pub"
+          key_name = STDIN.gets.chomp
+          key_name = "~/.ssh/id_rsa.pub" if key_name.empty?
+          break if `test -f #{keyname.shellescape}`
+          puts "Key file not found. Please try again."
+        end
+        ssh root@#{DEPLOY_HOST} 
+        ```
+    - [ ] Install Postgres: `sudo dokku plugin:install https://github.com/dokku/dokku-postgres.git postgres`
+
+  - Create the app on dokku:
+    - [ ] `dokku apps:create #{APP_NAME}`
+    - [ ] Update your DNS config so that #{HOST_NAME} A record (or CNAME) points to #{DEPLOY_HOST}
+    - [ ] Set domain: `dokku domains:add #{APP_NAME} #{HOST_NAME}`
+    - [ ] Set Let's Encrypt email: `dokku letsencrypt:set #{APP_NAME} email #{FROM_EMAIL}
+    - [ ] Enable Let's Encrypt: `dokku letsencrypt:enable #{APP_NAME}`
+    - [ ] Rails EXPOSES port 3000 in Dockerfile, so we need port mapping: `dokku ports:add #{APP_NAME} http:443:3000`
+    - Enable persistent storage: 
+      - [ ] Rails uses 1000:1000 which matches heroku: `dokku storage:ensure-directory --chown heroku #{APP_NAME}`
+      - [ ] `dokku storage:mount #{APP_NAME} /var/lib/dokku/data/storage/#{APP_NAME}/rails/storage:/rails/storage`
+    - [ ] Set Rails to handle assets: `dokku config:set #{APP_NAME} RAILS_SERVE_STATIC_FILES=true`
+    - [ ] Create Postgres service: `dokku postgres:create #{APP_NAME}-db`
+    - [ ] Link Postgres service: `dokku postgres:link #{APP_NAME}-db #{APP_NAME}`
+::var[WRAP_COMMAND]{}
+
+  - On the client side, add Dokku remote and deploy:
+    - [ ] Set RAILS_MASTER_KEY: `ssh #{DEPLOY_HOST} "dokku config:set #{APP_NAME} RAILS_MASTER_KEY=$(cat config/master.key)"`
+    - [ ] Add Dokku remote: `git remote add dokku dokku@#{DEPLOY_HOST}:#{APP_NAME}`
+    - [ ] Push code to Dokku (this includes migration via bin/docker-entrypoint): `git push dokku main`
+    - [ ] Ensure the application is running at `https://#{HOST_NAME}`
+
+    - Update Dokku Instructions:
+      - dokku ps:stop --all
+      - dokku-update
+
+
+  - [ ] Make modern browser also work on Opera on Android:
+  https://blog.saeloun.com/2024/03/18/rails-7-2-adds-allow-browser-to-set-minimum-versions/
+  https://github.com/rails/rails/pull/50505
+
+  - [ ] https://acuments.com/rails-serve-static-files-with-nginx.html
+
+  - [ ] jsbundling does not clean up old files during clobber
