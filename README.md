@@ -215,6 +215,8 @@ Options:
   - Browse a collection of Rails Application Templates at [RailsBytes](https://railsbytes.com/).
   - [Rubidium.io Templates](https://www.rubidium.io/) is/was another repoistory of some Rails Applicatoin Templates.
 
+- **[Boring Generators](https://github.com/abhaynikam/boring_generators)**: Boring Generators is a great collection of Rails generators that can be used to generate boilerplate code for Rails applications. After installing with `gem install boring_generators` you can use the shell command `boring g boring:xxx:install` to run any of their generators in a Baker file. Their generators are well thought out and can simplify bake scripts.
+
 - **[Jupyter Notebooks](https://jupyter.org/)**: Jupyter notebooks are excellent for documenting and executing code. They provide visual indications of executed code and allow easy re-execution from the beginning. Baker shares the same tinker style but treats completed tasks as done, making it more versatile for project setups.
 
 - **[Literate Programming](https://en.wikipedia.org/wiki/Literate_programming)**: Literate programming allows mixing code and documentation in a single file. Baker adopts a similar approach but is focused on executing setup steps.
