@@ -335,9 +335,13 @@ class Baker
         end
 
         puts (" → Executing ruby code: #{"\n" if line_will_break}#{to_display}").yellow
-
+        
         begin
-          result = o.instance_eval(command, @file_name, line.line_index)
+          if @file_name
+            result = o.instance_eval(command, @file_name, line.line_index)
+          else
+            result = o.instance_eval(command)
+          end
         rescue Exception => e
           result = e
         end

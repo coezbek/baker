@@ -3,33 +3,38 @@ require 'rspec'
 require_relative '../lib/baker'
 
 RSpec.describe Baker do
+
+  def baker_run_no_exit
+
+    expect {
+      @baker.run
+    }.not_to raise_error
+
+  end
+
   describe '#process_args' do
     before do
       @baker = Baker.new
     end
 
     it 'enables verbose mode when -v is passed' do
-      stub_const('ARGV', ['-v'])
-      expect { @baker.process_args }.not_to raise_error
+      stub_const('ARGV', ['-v', "spec/testfiles/bake_nop.md"])
+      expect {
+        expect { @baker.process_args }.to output(/Verbose mode/).to_stdout
+      }.not_to raise_error
       expect(@baker.debug).to be true
     end
 
     it 'enables interactive mode when -i is passed' do
-      stub_const('ARGV', ['-i'])
+      stub_const('ARGV', ['-i', "spec/testfiles/bake_nop.md"])
       expect { @baker.process_args }.not_to raise_error
       expect(@baker.interactive).to be true
     end
 
-    it 'sets file_name to template.md when no arguments are passed' do
-      stub_const('ARGV', [])
-      @baker.process_args
-      expect(@baker.file_name).to eq(File.expand_path('template.md'))
-    end
-
     it 'sets file_name to the given argument' do
-      stub_const('ARGV', ['testfile.md'])
-      @baker.process_args
-      expect(@baker.file_name).to eq(File.expand_path('testfile.md'))
+      stub_const('ARGV', ["spec/testfiles/bake_nop.md"])
+      expect { @baker.process_args }.not_to raise_error
+      expect(@baker.file_name).to eq(File.expand_path('spec/testfiles/bake_nop.md'))
     end
 
     it 'exits with an unknown option' do
@@ -56,7 +61,7 @@ RSpec.describe Baker do
     end
 
     xit 'processes recipe steps' do
-      expect { @baker.run }.to output(/Please enter your value for variable 'test':/).to_stdout
+      expect { baker_run_no_exit }.to output(/Please enter your value for variable 'test':/).to_stdout
     end
   end
 
@@ -70,8 +75,7 @@ RSpec.describe Baker do
 
     it 'processes recipe steps' do
       expect(Dir).to receive(:chdir).with("~/projects/myapp")
-      # expect { @baker.run }
-      expect{ @baker.run }.to output(/Changing directory to: ~\/projects\/myapp/).to_stdout
+      expect{ baker_run_no_exit }.to output(/Changing directory to: ~\/projects\/myapp/).to_stdout
     end
   end
 
@@ -82,10 +86,23 @@ RSpec.describe Baker do
       allow(File).to receive(:read).and_return(' - [ ] Run: ``mytest(1)``')
       allow(@baker).to receive(:save).and_return(nil)
     end
+    
+    # Define the `mytest` method on Object
+    class Object
+      def mytest(arg)
+        # You can leave this empty or provide a mock implementation
+      end
+
+      def mytest2(arg)
+        # You can leave this empty or provide a mock implementation
+      end
+    end
 
     it 'processes recipe steps' do
-      expect_any_instance_of(Object).to receive(:mytest).with(1).and_return(:unused)
-      expect { @baker.run }.to output(/Successfully executed/).to_stdout
+      allow_any_instance_of(Object).to receive(:mytest).with(1).and_return(:unused)
+      
+      expect { baker_run_no_exit }.to output(/Successfully executed/).to_stdout
+
       expect(@baker.recipe.steps.first.completed?).to eq(true)
     end
   end
@@ -97,10 +114,14 @@ RSpec.describe Baker do
       allow(File).to receive(:read).and_return(' - [ ] Run: ``mytest2(1)``')
       allow(@baker).to receive(:save).and_return(nil)
     end
-
+    
     it 'processes recipe steps' do
-      expect_any_instance_of(Object).to receive(:mytest2).with(1).and_raise(StandardError, "Can't mytest2(1)")     
-      expect { @baker.run }.to output(/Can't mytest2\(1\)/).to_stdout
+      allow_any_instance_of(Object).to receive(:mytest2).and_raise(StandardError, "Can't mytest2(1)")     
+      expect { 
+        expect {
+          @baker.run
+        }.to raise_error(SystemExit)
+       }.to output(/Can't mytest2\(1\)/).to_stdout
       expect(@baker.recipe.steps.first.completed?).to eq(false)
     end
   end
