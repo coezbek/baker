@@ -18,30 +18,90 @@ class Recipe
     j.steps = []
     
     next_day = []
-    multiline_ruby = nil
+    multiline = nil
     s.each_line.with_index { |line, index|
       index += 1 # 1-based index
 
-      if multiline_ruby
-        if line =~ /^\s*```/
-          
-          multiline_ruby[:lines] << line
+      if multiline
+        multiline[:lines] << line
+
+        case multiline[:multiline_type]
+        when :ruby, :shell
+
+          if line =~ /^\s*```\s*$/
+            
+            multiline[:command] << $1
+
+            j.steps << RecipeStep.new(
+              multiline[:lines], 
+              type: multiline[:multiline_type], 
+              task_marker: multiline[:task_marker], 
+              command: multiline[:command].join, 
+              description: multiline[:description],
+              line_index: multiline[:line_index])
+            
+            multiline = nil
+            next
+          end
+
+          # Multiline continues just collect items.
+          multiline[:command] << line
+          next
+
+        when :unknown
+
+          # If line starts with ``` we have a new block
+          if line =~ /^\s*```(.*\z)/m
+
+            # If this block starts with ```bash or ```sh we have a shell block
+            command = $1
+            if command.strip == "bash" || command.strip == "sh"
+              multiline[:multiline_type] = :shell
+              next
+            end
+
+            # All other blocks are considered ruby blocks
+            multiline[:multiline_type] = :ruby
+
+            if command =~ /^(.*)```\s*$/
+              # Ruby block terminated on same line
+              command = $1
+              raise if multiline[:command].size > 0
+              
+              j.steps << RecipeStep.new(
+                multiline[:lines],
+                type: multiline[:multiline_type],
+                task_marker: multiline[:task_marker],
+                command: command,
+                description: multiline[:description],
+                line_index: multiline[:line_index])
+
+              multiline = nil
+              next
+            end 
+
+            if command.strip != "ruby"
+              multiline[:command] << command
+            end
+            next
+          end
+            
+          # Line did not start with ```
 
           j.steps << RecipeStep.new(
-            multiline_ruby[:lines], 
-            type: :ruby, 
-            task_marker: multiline_ruby[:task_marker], 
-            command: multiline_ruby[:command].join, 
-            description: multiline_ruby[:description],
-            line_index: multiline_ruby[:line_index])
-          
-          multiline_ruby = nil
+            multiline[:lines],
+            type: :manual,
+            task_marker: multiline[:task_marker],
+            description: multiline[:description],
+            line_index: multiline[:line_index])
+
+          multiline = nil
+        
+          # IMPORTANT: Don't call next here, we continue processing this line as a normal line
 
         else
-          multiline_ruby[:lines] << line
-          multiline_ruby[:command] << line
+          raise "Unknown or missing multiline type: #{multiline[:multiline_type]}"
         end
-        next
       end
 
       if line =~ /^::(\w*?)(?:\[(.*?)\])?(?:\{(.*)\})?\s*$/
@@ -72,9 +132,48 @@ class Recipe
 
         j.steps << RecipeStep.new(line, type: :ruby, task_marker: $2, command: $4, description: $3, line_index: index)
 
-      elsif line =~ /^\s*(-\s+)?\[(.)\]\s(?:(.*?):)?\s*```(.*$)/m
-      
-        multiline_ruby = {lines: [line], task_marker: $2, description: $3, command: [$4], line_index: index}
+      elsif line =~ /^\s*(-\s+)?\[(.)\]\s(?:(.*?):)?\s*(.*\z)/m # was /m
+
+        task_marker = $2
+        description = $3
+        command = $4
+
+        # Command starts with ``` => Ruby command block
+        if command =~ /^```(.*\z)/m
+          command_block_type = :ruby
+          command = $1
+          if command.strip == "ruby"
+            command = "" # Ignore markdown block designator for ruby
+          end
+          if command =~ /^(.*)```\s*$/
+            # Ruby block terminated on same line
+            command = $1
+            j.steps << RecipeStep.new(line, type: :ruby, 
+              task_marker: task_marker, command: command, description: description, line_index: index)
+          else # Multiline ruby command started
+            commands = []
+            if command.strip.size > 0
+              commands << command
+            end
+            multiline = {
+              lines: [line], 
+              multiline_type: :ruby,
+              task_marker: task_marker, description: description, command: commands, line_index: index
+            }
+          end
+        else # Block doesn't start with ````
+          if command.strip.size > 0
+            # Not a ``` block but just other text after a colon
+            j.steps << RecipeStep.new(line, type: :manual, task_marker: task_marker, description: description, line_index: index)
+          else
+            # Empty line after colon, we don't know yet what comes next
+            multiline = {
+              lines: [line], 
+              multiline_type: :unknown,
+              task_marker: task_marker, description: description, command: [], line_index: index
+            }
+          end
+        end
         
       elsif line =~ /^\s*(-\s+)?\[(.)\]\s*(.*)/
 
@@ -82,9 +181,12 @@ class Recipe
       
       else
         j.steps << RecipeStep.new(line, type: :nop, line_index: index)
+
       end
     }
-
+    if multiline
+      raise "Unterminated multiline block. Are you missing closing triple backticks ``` on an empty line?" 
+    end
     return j
   end
 

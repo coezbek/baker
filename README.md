@@ -186,6 +186,7 @@ Running Baker templates involves executing shell commands on your machine. Alway
 - Add support for '-f', '--fast-forward' to printing of completed steps.
 - Add interactive mode (`baker -i`) to prompt each step before executing it.
 - Highlight all trailing whitespaces in bakefiles (in particular due to HEREDOC)
+- Markdown blocks starting on newlines are supported (' - [] description:\n```your code incl. newlines```).
 
 ### 0.1.0
 - Support running colorized/animated shell commands.
