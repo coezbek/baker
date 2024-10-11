@@ -82,7 +82,7 @@ A minimal set of variables is used by Baker to let you control its behavior:
 
 Example `rails_template.md`:
 
-```markdown
+````markdown
 # Rails Template
 
 - Markdown leaf block directive `template` can be used to prevent Baker from overwriting generic templates.
@@ -95,7 +95,7 @@ Example `rails_template.md`:
 
 ::var[APP_NAME]
 
-- [ ] Codeblocks which start on a line with a ` - ` or ` - [ ] ` are executed as ruby code: ```
+- [ ] Codeblocks which start on a line with a ` - ` or ` - [ ] ` are executed as ruby code if they start with three backticks and are after a colon: ```
   puts APP_NAME
   ```
 
@@ -111,7 +111,7 @@ Example `rails_template.md`:
   - [ ] `git push --set-upstream origin main`
   - [ ] `code .`
 - [ ] Manually review the generated code
-```
+````
 
 To execute the steps in the `rails_template.md` file, run the following command:
 
