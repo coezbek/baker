@@ -96,8 +96,8 @@ Example `rails_template.md`:
 ::var[APP_NAME]
 
 - [ ] Codeblocks which start on a line with a ` - ` or ` - [ ] ` are executed as ruby code: ```
-puts APP_NAME
-```
+  puts APP_NAME
+  ```
 
 - [ ] Check if directory already exists: `(! [ -d "#{APP_NAME}" ] || (echo "Directory '#{APP_NAME}' already exists" && exit 1))`
 - Setup Rails
