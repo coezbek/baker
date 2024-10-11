@@ -187,6 +187,8 @@ Running Baker templates involves executing shell commands on your machine. Alway
 - Add interactive mode (`baker -i`) to prompt each step before executing it.
 - Highlight all trailing whitespaces in bakefiles (in particular due to HEREDOC)
 - Markdown blocks starting on newlines are supported (' - [] description:\n```your code incl. newlines```).
+- Add '--no-save' option to run bake file without saving completed tasks.
+- Added a small plugin system to extend Baker's functionality.
 
 ### 0.1.0
 - Support running colorized/animated shell commands.
@@ -207,12 +209,35 @@ Options:
 - `-f`, `--fast-forward`: Don't print completed steps again
 - `--no-save`: Don't save any changes to the bake file. CAUTION: Tasks will still be run!
 
+## Extending Baker
+
+Baker includes a small plugin system that allows to hook into some aspects of the execution of the bakefile.
+
+To create a plugin, create a Ruby file in the `plugins` directory and register a block for actions that you are interested in:
+
+```ruby
+# The following triggers/hook types are availabe:
+#
+#  :before_load, :after_load           - before/after the baker file is loaded
+#  :before_line                        - before the line is undergoing variable expansion. Will be called even for lines which are completed ([x])
+#  :before_expansion, :after_expansion - before/after the line is undergoing variable expansion.
+#  :before_execution, :after_execution - before/after the line is executed
+#  :before_save, :after_save           - before/after the baker file is saved (which happens after each line with a task/command)
+#  :all  
+Baker.plugins.register(:trigger) do
+
+end
+```
+
+See the [`baker/plugins.rb`](baker/plugins.rb) for more details.
+
+As an example see the [`lib/baker/plugins/rails_generate_preflight.rb`](lib/baker/plugins/rails_generate_preflight.rb) plugin that checks if a Rails generator command contains any common mistakes.
+
 ## Related Works
 
 **How does `baker.rb` compare to...**
 
 - **[Rails Application Templates](https://guides.rubyonrails.org/rails_application_templates.html)**: Rails Application Templates are Ruby files containing DSL for adding gems, initializers, routes, etc., to a Rails application. You can run them with `rails new $AppName -m ~/template.rb`. It's easy to use Rails Application Templates in a Baker file by executing the shell command `rails app:template LOCATION=~/template.rb`.
-
   - Browse a collection of Rails Application Templates at [RailsBytes](https://railsbytes.com/).
   - [Rubidium.io Templates](https://www.rubidium.io/) is/was another repoistory of some Rails Applicatoin Templates.
 

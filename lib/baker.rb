@@ -17,10 +17,18 @@ using Rainbow
 
 require_relative 'baker/bakerlib'
 require_relative 'baker/bakeractions'
+require_relative 'baker/plugins'
 
 class Baker
-
   include BakerActions
+
+  class << self
+    # sig {returns(Plugins)}
+    def plugin
+      @plugin ||= Plugins.new
+    end
+    alias_method :plugins, :plugin
+  end
 
   attr_accessor :debug, :recipe, :file_name, :interactive
   def inspect
@@ -167,10 +175,12 @@ class Baker
 
       return
     end
+
+    Baker.plugins.init
     
     @context = { file_name: @file_name }
   
-    @recipe.steps.each { |line|
+    @recipe.steps.each do |line|
 
       # Skip all completed steps in fast forward mode
       if line.type != :directive
@@ -228,7 +238,7 @@ class Baker
 
           Dir.chdir(dir)
 
-        when :template          
+        when :template
 
           o = OpenStruct.new(@context)
           o.singleton_class.define_singleton_method(:const_missing) { |name| o[name] }
@@ -306,6 +316,19 @@ class Baker
         
         if @interactive
           puts " → About to execute ruby code: #{"\n" if line_will_break}#{to_display}".yellow
+        end
+
+        asked_before = false
+        case Baker.plugins.run(:before_execution, line: line, baker: self, command: command, context: @context)
+        when :skip
+          next
+        when :ask
+          puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
+          exit(1) if prompt_abort(line) == :abort
+          asked_before = true
+        end # Fallthrough: :continue
+
+        if @interactive && !asked_before
           puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
 
           exit(1) if prompt_abort(line) == :abort
@@ -338,6 +361,15 @@ class Baker
         puts "  → Successfully executed".green
         puts
         line.mark_complete
+        
+        case Baker.plugins.run(:after_execution, line: line, baker: self, command: command, context: @context)
+        when :skip
+          next
+        when :ask
+          puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
+          exit(1) if prompt_abort(line) == :abort
+          asked_before = true
+        end # Fallthrough: :continue
       
       when :shell
         # system line.content
@@ -373,12 +405,25 @@ class Baker
 
         if @interactive
           puts " → About to execute shell code: #{"\n" if line_will_break}#{to_display}".yellow
+        end
+
+        asked_before = false
+        case Baker.plugins.run(:before_execution, line: line, baker: self, command: command, context: @context)
+        when :skip
+          next
+        when :ask
+          puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
+          exit(1) if prompt_abort(line) == :abort
+          asked_before = true
+        end # Fallthrough: :continue
+
+        if @interactive && !asked_before
           puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
 
           exit(1) if prompt_abort(line) == :abort
         end
 
-        puts (" → Executing shell command: #{"\n" if line_will_break}#{to_display}").yellow
+        puts (" → Executing shell code: #{"\n" if line_will_break}#{to_display}").yellow
         
         mode = :ptyspawn_with_parser
         
@@ -521,6 +566,15 @@ class Baker
           exit 1
         end
 
+        case Baker.plugins.run(:after_execution, line: line, baker: self, command: command, context: @context)
+        when :skip
+          next
+        when :ask
+          puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
+          exit(1) if prompt_abort(line) == :abort
+          asked_before = true
+        end # Fallthrough: :continue
+
       when :manual
 
         if line.completed?
@@ -540,7 +594,7 @@ class Baker
       end
 
       save
-    }
+    end
 
     puts " → All steps completed.".green
 
