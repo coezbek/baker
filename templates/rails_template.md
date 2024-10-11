@@ -69,7 +69,7 @@
         YAML
       ```
   - [ ] `rake test`
-  - [ ] `exec rubocop -a`
+  - [ ] `bundle exec rubocop -a`
   - [ ] `git add . && git commit -m "Add devise" && git push`
 
   - Add some useful Rails extensions (from my perspective):
@@ -162,7 +162,7 @@
         RUBY
         ```
     - [ ] `rake test`
-    - [ ] `exec rubocop -a`
+    - [ ] `bundle exec rubocop -a`
     - [ ] `git add . && git commit -m "Add my monkey patches for Rails" && git push`
 
   - [ ] Start Visual Studio: `code .`
@@ -423,7 +423,7 @@
         }
         ```
     - [ ] `rails db:migrate`
-    - [ ] `exec rubocop -a`
+    - [ ] `bundle exec rubocop -a`
     - [ ] `rake test`
     - [ ] `git add . && git commit -m "Add Basic Database Classes for Sisuman" && git push`
 
@@ -435,14 +435,14 @@
     - [ ] `rails g trestle:resource Participation`
     - [ ] ``gsub_file "config/initializers/trestle.rb", '# config.root = "/"', 'config.root = "/"'``
     - [ ] `rails db:migrate`
-    - [ ] `exec rubocop -a`
+    - [ ] `bundle exec rubocop -a`
     - [ ] `git add . && git commit -m "Add Trestle Admin" && git push`
 
   - Trestle Auth
     - [ ] `bundle add trestle-auth`
     - [ ] `rails g trestle:auth:install User --devise`
     - [ ] `rails db:migrate`
-    - [ ] `exec rubocop -a`
+    - [ ] `bundle exec rubocop -a`
     - [ ] `git add . && git commit -m "Add Trestle Auth" && git push`
 
   - Add Roles via Rolify
@@ -451,7 +451,7 @@
     - [ ] Cache roles: `ruby -pi -e 'sub(/rolify/, "rolify after_add: ->(u,_){ u.touch }, after_remove: ->(u,_){ u.touch }\n\n  def has_role?(*args)\n    Rails.cache.fetch([cache_key_with_version, '"'"'has_role?'"'"', *args]) { super }\n  end\n")' app/models/user.rb`
     - [ ] Ensure only Admin can access /admin path: `sed -i '/  # config.before_action do/i\\ \ config.before_action do |controller|\\n    if !current_user || !current_user.has_role?(:admin)\\n      flash[:alert] = "Administrator access required."\\n      redirect_to Trestle.config.root\\n    end\\n  end' config/initializers/trestle.rb`
     - [ ] `rails db:migrate`
-    - [ ] `exec rubocop -a`
+    - [ ] `bundle exec rubocop -a`
     - [ ] `git add . && git commit -m "Add Roles via Rolify and allow only admin to access admin interface" && git push`
 
   - Create Admin User
@@ -462,7 +462,7 @@
     - [ ] `bundle add annotaterb --group development`
     - [ ] `rails g annotate_rb:install`
     - [ ] Run migration to create annotations: `rails db:migrate`
-    - [ ] `exec rubocop -a`
+    - [ ] `bundle exec rubocop -a`
     - [ ] `git add . && git commit -m "Add AnnotateRb Gem" && git push`
 
   - Install Better Errors with VSCode Integration
@@ -473,7 +473,7 @@
           end
         RUBY
         ```
-    - [ ] `exec rubocop -a`
+    - [ ] `bundle exec rubocop -a`
     - [ ] `git add . && git commit -m "Add Better Errors" && git push`
 
   - Add Font Awesome
@@ -483,7 +483,7 @@
     - [ ] Ensure file are marked as digested: ``inject_into_file "package.json", '--asset-names=[name]-[hash].digested ', after: 'esbuild app/javascript/*.* '``
       - See: https://github.com/evanw/esbuild/issues/2092
     - [ ] Remove --public-path: ``gsub_file "package.json", / --public-path=\/assets/, ""``
-    - [ ] `exec rubocop -a`
+    - [ ] `bundle exec rubocop -a`
     - [ ] `git add . && git commit -m "Add Font Awesome" && git push`
 
   - Customize Home Page
@@ -519,7 +519,7 @@
         }
         JSON
         ```
-    - [ ] `exec rubocop -a`
+    - [ ] `bundle exec rubocop -a`
     - [ ] `git add . && git commit -m "Prepare for production" && git push`
 
   - Deploy with Dokku
