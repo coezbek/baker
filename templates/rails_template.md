@@ -165,6 +165,43 @@
     - [ ] `bundle exec rubocop -a`
     - [ ] `git add . && git commit -m "Add my monkey patches for Rails" && git push`
 
+  - Add that browser is launched with `bin/dev`
+    - [ ] Create bin/browser: ```create_file "bin/browser", <<~'BASH'
+        #!/bin/bash
+        # Script to launch browser when server at the given port is ready
+        # Usage: bin/browser [URL=localhost] [PORT=3000]
+        # Can be launched with URL as subdomain.localhost, because modern browsers support this.
+
+        # Assign URL and port from arguments, defaulting to localhost and 3000 if not provided
+        URL=${1:-localhost}
+        PORT=${2:-3000}
+
+        # If the URL is a subdomain of localhost, substitute it with "localhost" for /dev/tcp check
+        TCP_URL=$URL
+        if [[ "$URL" == *.localhost ]]; then
+          TCP_URL=localhost
+        fi
+
+        echo "Waiting for http://$URL:$PORT to become available..."
+
+        # Wait for the specified port to become allocated and launch the browser
+        {
+          while ! echo -n > /dev/tcp/$TCP_URL/$PORT; do
+            sleep 1
+          done
+          wslview http://$URL:$PORT
+        } 2>/dev/null
+
+        echo "Browser launched"
+
+        # Prevent the script from terminating immediately after launching the browser
+        read
+        BASH
+      ```
+    - [ ] `chmod +x bin/browser`
+    - [ ] Modify Foreman to launch browser: ```gsub_file "Procfile.dev", /bin/rails server/, "\\0\nbrowser: bin/browser #{APP_NAME}.localhost"
+    - [ ] `git add . && git commit -m "Add bin/browser to launch browser with bin/dev" && git push`
+
   - [ ] Start Visual Studio: `code .`
     - [ ] Manually review the generated code
 
@@ -391,7 +428,7 @@
             HTML
           end
           ```
-    - [ ] `exec rubocop -a`
+    - [ ] `bundle exec rubocop -a`
     - [ ] `git add . && git commit -m "Add Picocss" && git push`
 
   - [ ] Add Basic Database Classes for your app below
