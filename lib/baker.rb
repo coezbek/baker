@@ -12,7 +12,7 @@ require 'ostruct'
 require 'rails/generators'
 require 'vtparser'
 require "tty-prompt"
-require 'rainbow/refinement' # for string colors 
+require 'rainbow/refinement' # for string colors
 using Rainbow
 
 require_relative 'baker/bakerlib'
@@ -115,7 +115,7 @@ class Baker
 
     o = OpenStruct.new(@context)
     o.singleton_class.define_singleton_method(:const_missing) { |name| o[name] }
-    
+
     return o.instance_eval(input)
   end
 
@@ -128,7 +128,7 @@ class Baker
 
     template_source_file = nil
 
-    @recipe.steps.each { |line|      
+    @recipe.steps.each { |line|
       case line.type
       when :directive
         case line.directive_type
@@ -144,7 +144,7 @@ class Baker
       puts "Error: No template source file found. Please add a ::template_source{path_to_template} directive to the bake file.".red
       exit(1)
     end
-    
+
     to_write = @recipe.to_s
     Tempfile.open("#{File.basename(@file_name)}_unbaked") do |tempfile|
       tempfile.write(to_write)
@@ -157,11 +157,11 @@ class Baker
   def run_safe
 
     run
-  
+
   rescue SystemExit
     # fall through
   rescue Exception => e
-    puts 
+    puts
     puts e.full_message(highlight: true, order: :bottom)
 
     puts
@@ -218,7 +218,7 @@ class Baker
         end
         @fast_forward = false
       end
-      
+
       if @debug
         puts "#{line.type} : #{line}"
       else
@@ -236,7 +236,7 @@ class Baker
             puts ""
 
             initial_value = expand_vars((line.attributes || "").sub(/^\s*default\s*=\s*/, ''))
-            
+
             raise "Initial value couldn't be determined for variable '#{line.content}'" if initial_value.nil?
 
             use_tty = true
@@ -261,7 +261,7 @@ class Baker
         when :cd
           o = OpenStruct.new(@context)
           o.singleton_class.define_singleton_method(:const_missing) { |name| o[name] }
-          
+
           dir = o.instance_eval(line.content)
           puts " → Changing directory to: #{dir}".yellow
 
@@ -277,10 +277,10 @@ class Baker
           if @interactive
             puts " ? About to execute template directive. Press y/Y to continue. Any other key to cancel and exit baker.".yellow
             puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
-  
+
             exit(1) if prompt_abort(line) == :abort
           end
-          
+
           puts (" → Executing template directive. Creating file: " + template_name_suggestion).yellow
 
           template_name_suggestion = File.expand_path(template_name_suggestion)
@@ -288,7 +288,7 @@ class Baker
             puts "Error: The file #{template_name_suggestion} already exists.".red
 
             puts " ? Do you want to overwrite the file? Enter y/Y to overwrite. Any other key to cancel and exit baker.".yellow
-            
+
             # Make a copy of the file contents before the user decides to overwrite
             @file_contents = File.read(template_name_suggestion)
 
@@ -330,19 +330,19 @@ class Baker
         o.extend Forwardable
         o.def_delegators :rails_gen_base, :create_file, :copy_file, :inside, :environment, :gem, :generate, :git, :initializer, :lib, :rails_command, :rake, :route
         o.def_delegators :myself, *BakerActions.instance_methods(false)
-        
+
         command = line.command
 
         # Apply indentation and any additional formatting
         to_display = unindent_common_whitespace(format_command(command, max_line_length = 160))
         line_will_break = to_display =~ /\n/ || to_display.length > 80
         to_display = "\n#{to_display}\n" if line_will_break && to_display.scan(/\n/).length == 0
-        
-        # Replace all trailing whitespace with · 
+
+        # Replace all trailing whitespace with ·
         to_display = to_display.gsub(/\s(?=\s*$)/, '·')
 
         to_display = to_display.indent(1).gsub(/^/, '▐').indent(3) if line_will_break
-        
+
         if @interactive
           puts " → About to execute ruby code: #{"\n" if line_will_break}#{to_display}".yellow
         end
@@ -364,7 +364,7 @@ class Baker
         end
 
         puts (" → Executing ruby code: #{"\n" if line_will_break}#{to_display}").yellow
-        
+
         begin
           if @file_name
             result = o.instance_eval(command, @file_name, line.line_index)
@@ -377,7 +377,7 @@ class Baker
 
         if result == false
           # We assume the ruby command outputted an error message
-          puts "  → Please fix the error or mark the todo as done.".red          
+          puts "  → Please fix the error or mark the todo as done.".red
           puts "      #{@file_name}:#{line.line_index}".red
           exit 1
         end
@@ -389,12 +389,12 @@ class Baker
           puts "  → Please fix the error or mark the todo as done.".red
           puts "      #{@file_name}:#{line.line_index}".red
           exit 1
-        end        
-      
+        end
+
         puts "  → Successfully executed".green
         puts
         line.mark_complete
-        
+
         case Baker.plugins.run(:after_execution, line: line, baker: self, command: command, context: @context)
         when :skip
           next
@@ -403,7 +403,7 @@ class Baker
           exit(1) if prompt_abort(line) == :abort
           asked_before = true
         end # Fallthrough: :continue
-      
+
       when :shell
         # system line.content
 
@@ -413,7 +413,7 @@ class Baker
         require 'ostruct'
         o = OpenStruct.new(@context)
         o.singleton_class.define_singleton_method(:const_missing) { |name| o[name] }
-        
+
         command = o.instance_eval("%(" + line.command + ")")
 
         if @context.has_key?('WRAP_COMMAND') && @context['WRAP_COMMAND'].to_s.strip != ""
@@ -425,15 +425,15 @@ class Baker
           o.singleton_class.define_singleton_method(:const_missing) { |name| o[name] }
           command = o.instance_eval("%(" + @context['WRAP_COMMAND'] + ")", @file_name, line.line_index)
         end
-        
+
         # Apply indentation and any additional formatting
         to_display = format_command(command, max_line_length = 160)
         line_will_break = to_display =~ /\n/ || to_display.length > 80
         to_display = "\n#{to_display}\n" if line_will_break && to_display.scan(/\n/).length == 1
-        
-        # Replace all trailing whitespace with · 
+
+        # Replace all trailing whitespace with ·
         to_display = to_display.gsub(/\s(?=\s*$)/, '·')
-        
+
         to_display = to_display.indent(1).gsub(/^/, '▐').indent(3) if line_will_break
 
         if @interactive
@@ -457,11 +457,11 @@ class Baker
         end
 
         puts (" → Executing shell code: #{"\n" if line_will_break}#{to_display}").yellow
-        
+
         mode = :ptyspawn_with_parser
-        
+
         case mode
-          
+
         when :system
           puts ">>>>>>".white
           # Bundler.with_clean_env {
@@ -469,8 +469,8 @@ class Baker
           #}
           puts ">>>>>>".white
 
-        when :open3 
-          
+        when :open3
+
           exit_status = nil
           require 'open3'
           Open3.popen2e(command) do |stdin, stdout_and_stderr, wait_thr|
@@ -568,7 +568,7 @@ class Baker
 
               # Clear the line, reset the cursor to the start of the line
               print "\e[2K\e[1G"
-              
+
             end
           rescue PTY::ChildExited
             # Child process has exited
@@ -587,11 +587,11 @@ class Baker
 
           if error.length < 80 && !(error =~ /\n/)
             puts "  → Failed with error: #{error}".red
-          else            
+          else
             puts "  → Failed with error:".red
             to_display = format_command(error, max_line_length = 160)
             to_display = "\n#{to_display}\n " if to_display.scan(/\n/).length == 0
-            to_display = to_display.indent(1).gsub(/^/, '▐').indent(3)  
+            to_display = to_display.indent(1).gsub(/^/, '▐').indent(3)
             puts to_display.red
           end
           puts "  → Please fix the error or mark the todo as done:".red
@@ -647,7 +647,7 @@ class Baker
     end
     if answer != 'y'
       require 'pathname'
-      puts 
+      puts
       puts (' → Aborting as requested. Run `baker ' + Pathname.new(@file_name).relative_path_from(@original_dir).to_s + '` to continue.').green
       puts "   Current task: #{@file_name}:#{line.line_index}".green
       return :abort
@@ -658,7 +658,7 @@ class Baker
   def save
 
     return if @no_save
-    
+
     to_write = @recipe.to_s
 
     if File.exist?(@file_name) && @file_contents != nil
@@ -672,7 +672,7 @@ class Baker
           when 'y'
             puts " → Exiting without saving. Please manually mark the successfully executed steps as done.".red
             exit 1
-          when 'd'            
+          when 'd'
             puts " → Diff:".red
             Tempfile.open('assumed_file_contents') do |tempfile|
               tempfile.write(@file_contents)
@@ -681,7 +681,7 @@ class Baker
             end
             puts
             next # Repeat
-          end          
+          end
           break
         end
       end
@@ -694,7 +694,7 @@ class Baker
       puts " → No changes to save.".yellow
     end
 
-  end    
+  end
 
   def run_plugins(block_type, line: nil)
 
