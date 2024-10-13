@@ -216,6 +216,29 @@ RSpec.describe 'Recipe Parser' do
       expect(additional_step.type).to eq(:nop) # Assuming additional text is treated as :nop
     end
 
+    it 'parses a nop correctly' do
+      input = "# Rails 7 Template with Devise"
+      recipe = Recipe.from_s(input)
+      expect(recipe.steps.size).to eq(1)
+      expect(recipe.steps.first.type).to eq(:nop)
+      expect(recipe.steps.first.description).to eq(input)    
+    end
+
+    it 'parses a manual task correctly' do
+      input = <<~MARKDOWN
+        - [x] Manually review the generated code
+        - [ ] This also!!
+      MARKDOWN
+      recipe = Recipe.from_s(input)
+      expect(recipe.steps.size).to eq(2)
+      expect(recipe.steps[0].type).to eq(:manual)
+      expect(recipe.steps[0].description).to eq('Manually review the generated code')
+      expect(recipe.steps[0].completed?).to be true
+      expect(recipe.steps[1].type).to eq(:manual)
+      expect(recipe.steps[1].description).to eq('This also!!')
+      expect(recipe.steps[1].completed?).to be false
+    end
+
     it 'parses task with indented code block' do
       input = <<~MARKDOWN
         - [ ] Task with indented code block:
@@ -242,5 +265,39 @@ RSpec.describe 'Recipe Parser' do
         end
       CODE
     end
+
+    it 'parses real world' do
+      input = <<~'MARKDOWN'
+        - [x] Make Docker build less noisy: ``gsub_file "Dockerfile", /apt-get update -qq/,  'apt-get -qq update'``
+        - [ ] Add app.json to include health-checks for Rails (db:migration is part of the Dockerfile): ```create_file "app.json", <<~JSON
+            {
+              "name": "#{APP_NAME}",
+              "healthchecks": {
+                "web": [
+                  {
+                      "type": "startup",
+                      "name": "#{APP_NAME} /up check",
+                      "path": "/up"
+                  }
+                ]
+              }
+            }
+            JSON
+            ```
+        - [ ] `bundle exec rubocop -a`
+      MARKDOWN
+      recipe = Recipe.from_s(input)
+      expect(recipe.steps.size).to eq(3)
+
+      step = recipe.steps.first
+      expect(step.type).to eq(:ruby)
+
+      step = recipe.steps[1]
+      expect(step.type).to eq(:ruby)
+
+      step = recipe.steps[2]
+      expect(step.type).to eq(:shell)     
+    end
+
   end
 end

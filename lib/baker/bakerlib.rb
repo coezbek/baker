@@ -80,7 +80,7 @@ class Recipe
               next
             end 
 
-            if command.strip != "ruby"
+            if command.strip != "ruby" && command.strip.size > 0
               multiline[:command] << command
             end
             next
@@ -132,11 +132,13 @@ class Recipe
 
         j.steps << RecipeStep.new(line, type: :ruby, task_marker: $2, command: $4, description: $3, line_index: index)
 
-      elsif line =~ /^\s*(-\s+)?\[(.)\]\s(?:(.*?):)?\s*(.*\z)/m # was /m
+      # General case in which a multiline task might be started
+      # We will try to find the last colon to separate description and command unless there is a backtick after a colon
+      elsif line =~ /^\s*(-\s+)?\[(.)\]\s(?:(.*?):(?=\s*`)|(.*):(?=[ \n]))?\s*(.*\z)/m
 
         task_marker = $2
-        description = $3
-        command = $4
+        description = $3 || $4
+        command = $5
 
         # Command starts with ``` => Ruby command block
         if command =~ /^```(.*\z)/m
@@ -164,6 +166,8 @@ class Recipe
         else # Block doesn't start with ````
           if command.strip.size > 0
             # Not a ``` block but just other text after a colon
+
+            description = (description ? [description, command].join(": ") : command).chomp
             j.steps << RecipeStep.new(line, type: :manual, task_marker: task_marker, description: description, line_index: index)
           else
             # Empty line after colon, we don't know yet what comes next
@@ -175,12 +179,12 @@ class Recipe
           end
         end
         
-      elsif line =~ /^\s*(-\s+)?\[(.)\]\s*(.*)/
+      elsif line =~ /^\s*(-\s+)?\[(.)\]\s*(.*\z)/m
 
         j.steps << RecipeStep.new(line, type: :manual, task_marker: $2, description: $3, line_index: index)
       
       else
-        j.steps << RecipeStep.new(line, type: :nop, line_index: index)
+        j.steps << RecipeStep.new(line, type: :nop, line_index: index, description: line.chomp)
 
       end
     }
@@ -289,7 +293,7 @@ class RecipeStep
   end
 
   def content
-    raise "Not a directive" if type != :directive
+    raise "RecipeStep.content is only valid for a directive, but is #{type}" if type != :directive
     return @content
   end
 

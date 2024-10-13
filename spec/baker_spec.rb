@@ -223,6 +223,18 @@ RSpec.describe Recipe do
 
     end
 
+    it 'supports colon in description and code' do
+
+      input = " - [ ] If a colon : is in the description and in the code: ```puts 'test: test'```"
+      recipe = Recipe.from_s input
+      
+      expect(recipe.steps.size).to eq(1)
+      s = recipe.steps.first
+      expect(s.description).to eq("If a colon : is in the description and in the code")
+      expect(s.command).to eq("puts 'test: test'")
+
+    end
+
     it 'supports multi-line ruby commands' do
 
       input = <<~EOL
