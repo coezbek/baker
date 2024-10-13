@@ -189,6 +189,9 @@ Running Baker templates involves executing shell commands on your machine. Alway
 - Markdown blocks starting on newlines are supported (' - [] description:\n```your code incl. newlines```).
 - Add '--no-save' option to run bake file without saving completed tasks.
 - Added a small plugin system to extend Baker's functionality.
+- Ring a bell if more than 5 seconds passed since the last manual task which needs confirmation.
+- Added '--no-bell' to disable the bell.
+- Added '--rails-app-template' to print the given bakefile as a Rails App Template.
 
 ### 0.1.0
 - Support running colorized/animated shell commands.
@@ -208,6 +211,8 @@ Options:
 - `-i`, `--interactive`: Prompt before executing each step.
 - `-f`, `--fast-forward`: Don't print completed steps again
 - `--no-save`: Don't save any changes to the bake file. CAUTION: Tasks will still be run!
+- `--no-bell`: Don't ring the bell if more than 5 seconds passed since the last manual task which needs confirmation.
+- `--rails-app-template`: Print the given bakefile as a Rails App Template.
 
 ## Extending Baker
 
@@ -218,12 +223,15 @@ To create a plugin, create a Ruby file in the `plugins` directory and register a
 ```ruby
 # The following triggers/hook types are availabe:
 #
+#  :before_options, :after_options     - before/after the command line options are processed
 #  :before_load, :after_load           - before/after the baker file is loaded
 #  :before_line                        - before the line is undergoing variable expansion. Will be called even for lines which are completed ([x])
-#  :before_expansion, :after_expansion - before/after the line is undergoing variable expansion.
-#  :before_execution, :after_execution - before/after the line is executed
+#  :before_expansion, :after_expansion - before/after the line is undergoing variable expansion. This is only called for tasks :shell and :ruby
+#  :before_execution                   - before the line is executed.
+#  :after_execution                    - after the line is executed which includes printing error messages and marking the line as completed
 #  :before_save, :after_save           - before/after the baker file is saved (which happens after each line with a task/command)
-#  :all  
+#  :all                                - all of the above
+#
 Baker.plugins.register(:trigger) do
 
 end
@@ -232,6 +240,8 @@ end
 See the [`baker/plugins.rb`](baker/plugins.rb) for more details.
 
 As an example see the [`lib/baker/plugins/rails_generate_preflight.rb`](lib/baker/plugins/rails_generate_preflight.rb) plugin that checks if a Rails generator command contains any common mistakes.
+
+As a simple example for how to add command line options see the [`lib/baker/plugins/bell_plugin.rb`](lib/baker/plugins/bell_plugin.rb).
 
 ## Related Works
 
