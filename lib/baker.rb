@@ -590,10 +590,13 @@ class Baker
 
         puts
         puts " → Please enter: y/Y to mark complete and continue or any other key to do nothing and exit".yellow
-    
+
+        next if run_plugins(:before_execution, line: line) == :skip
+
         exit(1) if prompt_abort(line) == :abort
-    
+
         line.mark_complete
+        next if run_plugins(:after_execution, line: line) == :skip
 
       end
 
@@ -663,6 +666,19 @@ class Baker
     end
 
   end    
+
+  def run_plugins(block_type, line: nil)
+
+    puts "Running plugins for block type: #{block_type}" if @debug
+
+    case Baker.plugins.run(block_type, baker: self, line: line)
+    when :skip
+      return :skip
+    when :ask
+      puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
+      exit(1) if prompt_abort(line) == :abort
+    end
+  end
 
 end
 
