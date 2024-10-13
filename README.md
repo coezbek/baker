@@ -35,7 +35,7 @@ You can find a real-world example of a Rails template in [`templates/rails_templ
 To install Baker, run:
 
 ```bash
-gem install bakerb
+gem install bakerb # Not a typo. The gem's name is 'bakerb', because 'baker' was already taken.
 ```
 
 Then either create your own bake file or use one of the templates in the `templates` directory and run it with:
