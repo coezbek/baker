@@ -31,6 +31,10 @@ class Baker
   end
 
   attr_accessor :debug, :recipe, :file_name, :interactive
+
+  # Options Parser
+  attr_accessor :opts
+
   def inspect
     # Nothing gained here from seeing instance variables
     return to_s
@@ -40,39 +44,45 @@ class Baker
     (self.instance_variables - [:@file_contents, :@recipe]).inject({}){ |cont, attr| cont[attr] = instance_variable_get(attr); cont }
   end
 
+  def create_options_parser
+
+    @opts = OptionParser.new
+
+    opts.banner = 'Usage: baker [options] [file]'
+
+    opts.on('-v', '--verbose', 'Enable verbose/debug output') do
+      @debug = true
+      puts "Verbose mode enabled".yellow
+    end
+
+    opts.on('-d', '--diff', 'Show diff of the bake file to its template') do
+      @diff_mode = true
+      puts "Diff mode enabled".yellow if $stdout.tty?
+    end
+
+    opts.on('-i', '--interactive', 'Enable interactive mode') do
+      @interactive = true
+    end
+
+    opts.on('-f', '--fast-forward', 'Skip all completed steps') do
+      @fast_forward = true
+    end
+
+    opts.on('--no-save', 'Do not save any changes to the bake file') do
+      @no_save = true
+    end
+
+    opts.on('-h', '--help', 'Displays Help') do
+      puts opts
+      exit
+    end
+  end
+
   def process_args
-
+    run_plugins(:before_options)
+    
     begin
-      OptionParser.new do |opts|
-        opts.banner = 'Usage: baker [options] [file]'
-
-        opts.on('-v', '--verbose', 'Enable verbose/debug output') do
-          @debug = true
-          puts "Verbose mode enabled".yellow
-        end
-
-        opts.on('-d', '--diff', 'Show diff of the bake file to its template') do
-          @diff_mode = true
-          puts "Diff mode enabled".yellow if $stdout.tty?
-        end
-
-        opts.on('-i', '--interactive', 'Enable interactive mode') do
-          @interactive = true
-        end
-
-        opts.on('-f', '--fast-forward', 'Skip all completed steps') do
-          @fast_forward = true
-        end
-
-        opts.on('--no-save', 'Do not save any changes to the bake file') do
-          @no_save = true
-        end
-
-        opts.on('-h', '--help', 'Displays Help') do
-          puts opts
-          exit
-        end
-      end.parse!
+      opts.parse!
     rescue OptionParser::InvalidOption => e
       puts e
       exit(1)
@@ -90,7 +100,7 @@ class Baker
 
     puts "Bake File: #{@file_name}".yellow if @debug
 
-    return nil
+    run_plugins(:after_options)
   end
 
   def expand_vars(input)
@@ -159,16 +169,39 @@ class Baker
     puts " → Please fix the error and run `baker #{Pathname.new(@file_name).relative_path_from(@original_dir) }` to continue.".yellow
   end
 
-  def run
+  def load_file
 
-    status = process_args
-    return if status == :close
+    @context = { file_name: @file_name }
 
-    # @file_contents represents the file that baker believes is on disk. 
+    case Baker.plugins.run(:before_load, baker: self, context: @context)
+    when :ask
+      puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
+      exit(1) if prompt_abort(line) == :abort
+    end # Fallthrough: :continue, :skip
+
+    # @file_contents represents the file that baker believes is on disk.
     # It is used to check if there was any concurrent modification.
     @file_contents = File.read(@file_name)
-    
+
     @recipe = Recipe.from_s(@file_contents)
+
+    case Baker.plugins.run(:after_load, baker: self, context: @context)
+    when :ask
+      puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
+      exit(1) if prompt_abort(line) == :abort
+    end # Fallthrough: :continue, :skip
+
+  end
+
+  def run
+
+    create_options_parser
+
+    Baker.plugins.init
+
+    process_args
+
+    load_file
 
     if @diff_mode
       run_diff()
@@ -176,10 +209,6 @@ class Baker
       return
     end
 
-    Baker.plugins.init
-    
-    @context = { file_name: @file_name }
-  
     @recipe.steps.each do |line|
 
       # Skip all completed steps in fast forward mode

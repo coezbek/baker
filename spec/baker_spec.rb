@@ -19,26 +19,32 @@ RSpec.describe Baker do
 
     it 'enables verbose mode when -v is passed' do
       stub_const('ARGV', ['-v', "spec/testfiles/bake_nop.md"])
+      @baker.create_options_parser
       expect {
-        expect { @baker.process_args }.to output(/Verbose mode/).to_stdout
+        expect { 
+          @baker.process_args
+        }.to output(/Verbose mode/).to_stdout
       }.not_to raise_error
       expect(@baker.debug).to be true
     end
 
     it 'enables interactive mode when -i is passed' do
       stub_const('ARGV', ['-i', "spec/testfiles/bake_nop.md"])
+      @baker.create_options_parser
       expect { @baker.process_args }.not_to raise_error
       expect(@baker.interactive).to be true
     end
 
     it 'sets file_name to the given argument' do
       stub_const('ARGV', ["spec/testfiles/bake_nop.md"])
+      @baker.create_options_parser
       expect { @baker.process_args }.not_to raise_error
       expect(@baker.file_name).to eq(File.expand_path('spec/testfiles/bake_nop.md'))
     end
 
     it 'exits with an unknown option' do
       stub_const('ARGV', ['-x'])
+      @baker.create_options_parser
       expect { @baker.process_args }.to raise_error(SystemExit).and output(/invalid option: -x/).to_stdout
     end
   end
