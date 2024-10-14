@@ -80,7 +80,7 @@ class Plugins
 
     @plugins.dig(action_type)&.each do |block|
 
-      puts "Running plugin block: #{block.source_location[0]}:#{block.source_location[1]}" if baker.debug
+      # puts "Running plugin block: #{block.source_location[0]}:#{block.source_location[1]}" if baker.debug
 
       result = OpenStruct.new(line: line, baker: baker, command: command, context: context, action_type: action_type).instance_eval(&block)
 

@@ -20,7 +20,6 @@ class Recipe
     next_day = []
     multiline = nil
     s.each_line.with_index { |line, index|
-      index += 1 # 1-based index
 
       if multiline
         multiline[:lines] << line
@@ -224,7 +223,7 @@ class RecipeStep
   attr_accessor :lines
   attr_accessor :type
   attr_writer :attributes
-  attr_reader :line_index
+  attr_reader :line_index # matches the index into the parent Recipe.steps.array
 
   def initialize(lines, type: , directive_type: nil, content: nil, attributes: nil, command: nil, task_marker: nil, description: nil, line_index: nil)
     if lines.is_a?(Array)
@@ -250,6 +249,26 @@ class RecipeStep
     lines.join
   end
 
+  # Returns the description if any, otherwise the first line of the command with an indication of type ruby or shell
+  # Otherwise first line
+  def single_line_for_display
+    if description && description.strip.size > 0
+      return description
+    end
+    if command && command.strip.size > 0
+      return "#{type} command - " + (command.split("\n").first == command ? command : command.split("\n").first + "...").strip
+    end
+
+    s = to_s
+    return '<empty line>' if s.strip.size == 0
+
+    return (s.split("\n").first == s ? s : s.split("\n").first + "...").strip
+  end
+
+  def source_code_line_index
+    return @line_index + 1
+  end
+
   def completed?
     case type
     when :directive
@@ -257,6 +276,10 @@ class RecipeStep
       when :var
         return attributes != nil
       when :template
+        return false
+      when :template_source
+        return false
+      when :cd
         return false
       end
       raise "Unknown directive type: #{directive_type}"
@@ -275,6 +298,23 @@ class RecipeStep
       puts lines.inspect
       raise
     end
+  end
+
+  def mark_strikethrough
+    if lines[0] =~ /\[\s\]/
+      lines[0].sub!(/\[\s\]/, "[-]")
+      @task_marker = "-"
+    else
+      puts lines.inspect
+      raise
+    end
+  end
+
+  # Returns the indentation level (whitespace count) of the first line in this RecipeLine
+  # Empty lines are considered to have an indentation level of nil
+  def indentation_level
+    return nil if !lines || lines.size == 0 || lines[0].strip.length == 0
+    return lines[0][/\A\s*/].length
   end
 
   def mark_todo

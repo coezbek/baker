@@ -176,7 +176,7 @@ class Baker
     case Baker.plugins.run(:before_load, baker: self, context: @context)
     when :ask
       puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
-      exit(1) if prompt_abort(line) == :abort
+      exit(1) if prompt_user_choice(nil) == :abort
     end # Fallthrough: :continue, :skip
 
     # @file_contents represents the file that baker believes is on disk.
@@ -188,7 +188,7 @@ class Baker
     case Baker.plugins.run(:after_load, baker: self, context: @context)
     when :ask
       puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
-      exit(1) if prompt_abort(line) == :abort
+      exit(1) if prompt_user_choice(nil) == :abort
     end # Fallthrough: :continue, :skip
 
   end
@@ -209,9 +209,12 @@ class Baker
       return
     end
 
-    @recipe.steps.each do |line|
+    # Skip stack is used to maintain a list of indentation levels that we need to skip
+    @skip_stack = []
 
-      # Skip all completed steps in fast forward mode
+    @recipe.steps.each_with_index do |line, index|
+
+      # Skip all completed (incl. strikethrough) steps in fast forward mode
       if line.type != :directive
         if @fast_forward && line.completed?
           next
@@ -223,6 +226,20 @@ class Baker
         puts "#{line.type} : #{line}"
       else
         puts line
+      end
+
+      # Check if we need to skip this line due to skip stack
+      if !@skip_stack.empty?
+        current_skip_indent = @skip_stack.last
+
+        current_line_indent = line.indentation_level
+        if current_line_indent == nil || current_line_indent > current_skip_indent
+          # Skip this line
+          next
+        else
+          # We are back to a lower indentation, pop the skip stack
+          @skip_stack.pop
+        end
       end
 
       case line.type
@@ -278,7 +295,7 @@ class Baker
             puts " ? About to execute template directive. Press y/Y to continue. Any other key to cancel and exit baker.".yellow
             puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
 
-            exit(1) if prompt_abort(line) == :abort
+            exit(1) if prompt_user_choice(line) == :abort
           end
 
           puts (" → Executing template directive. Creating file: " + template_name_suggestion).yellow
@@ -353,21 +370,21 @@ class Baker
           next
         when :ask
           puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
-          exit(1) if prompt_abort(line) == :abort
+          exit(1) if prompt_user_choice(line) == :abort
           asked_before = true
         end # Fallthrough: :continue
 
         if @interactive && !asked_before
           puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
 
-          exit(1) if prompt_abort(line) == :abort
+          exit(1) if prompt_user_choice(line) == :abort
         end
 
         puts (" → Executing ruby code: #{"\n" if line_will_break}#{to_display}").yellow
 
         begin
           if @file_name
-            result = o.instance_eval(command, @file_name, line.line_index)
+            result = o.instance_eval(command, @file_name, line.source_code_line_index)
           else
             result = o.instance_eval(command)
           end
@@ -378,7 +395,7 @@ class Baker
         if result == false
           # We assume the ruby command outputted an error message
           puts "  → Please fix the error or mark the todo as done.".red
-          puts "      #{@file_name}:#{line.line_index}".red
+          puts "      #{@file_name}:#{line.source_code_line_index}".red
           exit 1
         end
 
@@ -387,7 +404,7 @@ class Baker
           puts result
           puts result.backtrace
           puts "  → Please fix the error or mark the todo as done.".red
-          puts "      #{@file_name}:#{line.line_index}".red
+          puts "      #{@file_name}:#{line.source_code_line_index}".red
           exit 1
         end
 
@@ -400,7 +417,7 @@ class Baker
           next
         when :ask
           puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
-          exit(1) if prompt_abort(line) == :abort
+          exit(1) if prompt_user_choice(line) == :abort
           asked_before = true
         end # Fallthrough: :continue
 
@@ -423,7 +440,7 @@ class Baker
 
           o = OpenStruct.new(context)
           o.singleton_class.define_singleton_method(:const_missing) { |name| o[name] }
-          command = o.instance_eval("%(" + @context['WRAP_COMMAND'] + ")", @file_name, line.line_index)
+          command = o.instance_eval("%(" + @context['WRAP_COMMAND'] + ")", @file_name, line.source_code_line_index)
         end
 
         # Apply indentation and any additional formatting
@@ -446,14 +463,14 @@ class Baker
           next
         when :ask
           puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
-          exit(1) if prompt_abort(line) == :abort
+          exit(1) if prompt_user_choice(line) == :abort
           asked_before = true
         end # Fallthrough: :continue
 
         if @interactive && !asked_before
           puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
 
-          exit(1) if prompt_abort(line) == :abort
+          exit(1) if prompt_user_choice(line) == :abort
         end
 
         puts (" → Executing shell code: #{"\n" if line_will_break}#{to_display}").yellow
@@ -595,7 +612,7 @@ class Baker
             puts to_display.red
           end
           puts "  → Please fix the error or mark the todo as done:".red
-          puts "      #{@file_name}:#{line.line_index}".red
+          puts "      #{@file_name}:#{line.source_code_line_index}".red
           exit 1
         end
 
@@ -604,7 +621,7 @@ class Baker
           next
         when :ask
           puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
-          exit(1) if prompt_abort(line) == :abort
+          exit(1) if prompt_user_choice(line) == :abort
           asked_before = true
         end # Fallthrough: :continue
 
@@ -617,14 +634,51 @@ class Baker
         puts " → Perform the following steps manually:".yellow
         puts line.description
 
+        allow_skip_permanently = !@no_save
+        skip_message = "s to skip temporarily, #{"- or p to skip permanently, " if allow_skip_permanently}"
         puts
-        puts " → Please enter: y/Y to mark complete and continue or any other key to do nothing and exit".yellow
+        puts " → Please enter: 'y' to confirm the task was completed, #{skip_message}or any other key to abort and exit baker.".yellow
 
         next if run_plugins(:before_execution, line: line) == :skip
 
-        exit(1) if prompt_abort(line) == :abort
+        user_choice = prompt_user_choice(line, allow_skip: true)
+        user_choice = 's' if user_choice == :skip_permanently && !allow_skip_permanently
 
-        line.mark_complete
+        case user_choice
+        
+        when :continue
+          line.mark_complete
+
+        when :skip_temporarily
+          skip_indent_level = line.indentation_level
+          @skip_stack.push(skip_indent_level)
+
+        when :skip_permanently
+          
+          # Mark this and all sub-task as permanently skipped
+          line_indent = line.indentation_level
+          
+          first_line = true
+          @recipe.steps[index..].each { |line|
+
+            # Skip empty lines
+            next if line.indentation_level == nil
+
+            # Break if we are back to the same or higher indentation level
+            break if !first_line && line.indentation_level <= line_indent
+            first_line = false
+            
+            next if line.completed?
+
+            puts " → Skipping permanently: #{line.single_line_for_display}".yellow
+
+            line.mark_strikethrough
+          }
+
+        when :abort
+          exit(1)
+        end
+
         next if run_plugins(:after_execution, line: line) == :skip
 
       end
@@ -637,22 +691,31 @@ class Baker
   end
 
   #
-  # Interact with the user to confirm the manual step has been completed/the user wants to continue.
+  # Prompt the user for input and return their choice.
   #
-  def prompt_abort(line)
+  def prompt_user_choice(line, allow_skip: false)
     begin
       answer = STDIN.gets().strip.downcase
     rescue Interrupt
-      answer = 'n'
+      answer = ''
     end
-    if answer != 'y'
+
+    answer = '' if !allow_skip && ['s', '-', 'p'].include?(answer)
+
+    case answer
+    when 'y'
+      return :continue
+    when 's'
+      return :skip_temporarily
+    when '-', 'p'
+      return :skip_permanently
+    else
       require 'pathname'
       puts
       puts (' → Aborting as requested. Run `baker ' + Pathname.new(@file_name).relative_path_from(@original_dir).to_s + '` to continue.').green
-      puts "   Current task: #{@file_name}:#{line.line_index}".green
+      puts "   Current task: #{@file_name}:#{line.source_code_line_index}".green if line
       return :abort
     end
-    return :continue
   end
 
   def save
@@ -705,7 +768,7 @@ class Baker
       return :skip
     when :ask
       puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
-      exit(1) if prompt_abort(line) == :abort
+      exit(1) if prompt_user_choice(line) == :abort
     end
   end
 

@@ -192,6 +192,7 @@ Running Baker templates involves executing shell commands on your machine. Alway
 - Ring a bell if more than 5 seconds passed since the last manual task which needs confirmation.
 - Added '--no-bell' to disable the bell.
 - Added '--rails-app-template' to print the given bakefile as a Rails App Template.
+- Added support for temporarily or permantently skipping tasks.
 
 ### 0.1.0
 - Support running colorized/animated shell commands.
