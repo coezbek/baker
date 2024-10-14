@@ -171,12 +171,13 @@
     - [ ] `bundle exec rubocop -a`
     - [ ] `git add . && git commit -m "Add my monkey patches for Rails" && git push`
 
-  - Add that browser is launched with `bin/dev`
+  - Add that browser is launched with `bin/dev` on a predictable but random port to avoid collisions
     - [ ] Create bin/browser: ```create_file "bin/browser", <<~'BASH'
         #!/bin/bash
         # Script to launch browser when server at the given port is ready
         # Usage: bin/browser [URL=localhost] [PORT=3000]
         # Can be launched with URL as subdomain.localhost, because modern browsers support this.
+        # Script will not exit to prevent foreman to terminate also all other processes 
 
         # Assign URL and port from arguments, defaulting to localhost and 3000 if not provided
         URL=${1:-localhost}
@@ -195,17 +196,40 @@
           while ! echo -n > /dev/tcp/$TCP_URL/$PORT; do
             sleep 1
           done
-          wslview http://$URL:$PORT
         } 2>/dev/null
 
-        echo "Browser launched"
+        # Detect the appropriate browser command (wslview, open, or xdg-open)
+        # Start with wslview to start the host browser in WSL2
+        if command -v wslview > /dev/null; then
+          OPEN_CMD="wslview"
+        elif command -v open > /dev/null; then
+          OPEN_CMD="open"
+        elif command -v xdg-open > /dev/null; then
+          OPEN_CMD="xdg-open"
+        else
+          echo "No supported command for opening command found. Please install wslview, open, or xdg-open. Press Enter to Close."
+          read
+        fi
+
+        # Replace with open for MacOS or xdg-open for Linux
+        $OPEN_CMD http://$URL:$PORT
+
+        echo "Browser launched. Press Enter to Close."
 
         # Prevent the script from terminating immediately after launching the browser
         read
         BASH
       ```
-    - [ ] `chmod +x bin/browser`
-    - [ ] Modify Foreman to launch browser: ```gsub_file "Procfile.dev", /bin/rails server/, "\\0\nbrowser: bin/browser #{APP_NAME}.localhost"
+    - [ ] Make script executable: `chmod +x bin/browser`
+    - [ ] Modify Foreman to (1) launch browser on predictable port and (2) open APP_NAME.localhost: ```
+        require 'digest' 
+        # Generate a port based on the app name between 3000 and 29900 in 100 increments
+        PORT = 3000 + 100 * ::Digest::SHA256.hexdigest(APP_NAME)[0...15].to_i % 270
+      
+        gsub_file "Procfile.dev", /bin\/rails server/, 
+          "\\0 -p #{PORT}\nbrowser: bin/browser #{APP_NAME}.localhost #{PORT}"
+     
+    ```
     - [ ] `git add . && git commit -m "Add bin/browser to launch browser with bin/dev" && git push`
 
   - [ ] Start Visual Studio: `code .`
