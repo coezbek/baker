@@ -36,8 +36,14 @@
   - [ ] `rails generate devise User`
   - [ ] `rails db:migrate`
   - [ ] `rails generate controller Home index --skip-routes`
-  - [ ] Secure all controllers: `ruby -pi -e 'gsub(/end/, "\n  before_action :authenticate_user!\nend")' app/controllers/application_controller.rb`
-  - [ ] Except home controller: `ruby -pi -e 'gsub(/^end/, "\n  skip_before_action :authenticate_user!, only: :index\nend")' app/controllers/home_controller.rb`
+  - [ ] Secure all controllers:
+    ```ruby
+    inject_into_class "app/controllers/application_controller.rb", ApplicationController, "  before_action :authenticate_user!\n"
+    ```
+  - [ ] Except Home controller:
+    ```ruby
+    inject_into_class "app/controllers/home_controller.rb", HomeController, "  skip_before_action :authenticate_user!, only: :index\n"
+    ```
   - [ ] Insert the flash into application.html.erb: ```inject_into_file "app/views/layouts/application.html.erb", after: "<body>\n" do
           <<~HTML.indent(4)
             <p class="notice"><%= notice %></p>
@@ -462,7 +468,7 @@
     - [ ] `rails db:migrate`
     - [ ] `bundle exec rubocop -a`
     - [ ] `rake test`
-    - [ ] `git add . && git commit -m "Add Basic Database Classes for Sisuman" && git push`
+    - [ ] `git add . && git commit -m "Add Basic Database Classes for #{APP_NAME}" && git push`
 
   - Add Trestle Admin
     - [ ] `bundle add trestle`
