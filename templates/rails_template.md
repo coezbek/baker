@@ -495,7 +495,7 @@
     - [ ] `rails runner 'User.create!(email: "#{FROM_EMAIL}", password: "#{TTY::Prompt.new.mask("Enter password for #{FROM_EMAIL}:")}")'`
     - [ ] `rails runner 'User.find_by(email: "#{FROM_EMAIL}").add_role(:admin).save!'`
 
-  - Add Annotate Gem for Models
+  - Add `annotaterb` gem (it's a modern version of the 'annotate' gem)
     - [ ] `bundle add annotaterb --group development`
     - [ ] `rails g annotate_rb:install`
     - [ ] Run migration to create annotations: `rails db:migrate`
