@@ -622,7 +622,7 @@
     - [ ] Set domain: `dokku domains:add #{APP_NAME} #{HOST_NAME}`
     - [ ] Set Let's Encrypt email: `dokku letsencrypt:set #{APP_NAME} email #{FROM_EMAIL}
     - [ ] Enable Let's Encrypt: `dokku letsencrypt:enable #{APP_NAME}`
-    - [ ] Rails EXPOSES port 3000 in Dockerfile, so we need port mapping: `dokku ports:add #{APP_NAME} http:443:3000`
+    - [ ] Rails EXPOSES port 3000 in Dockerfile, so we need port mapping: `dokku ports:add #{APP_NAME} https:443:3000`
     - Enable persistent storage: 
       - [ ] Rails uses 1000:1000 which matches heroku: `dokku storage:ensure-directory --chown heroku #{APP_NAME}`
       - [ ] `dokku storage:mount #{APP_NAME} /var/lib/dokku/data/storage/#{APP_NAME}/rails/storage:/rails/storage`
