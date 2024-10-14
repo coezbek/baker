@@ -461,6 +461,39 @@
     - [ ] `bundle exec rubocop -a`
     - [ ] `git add . && git commit -m "Add Picocss" && git push`
 
+  - Generate Favicon for App:
+    - [ ] `sudo apt-get install -y inkscape`
+    - [ ] `sudo apt install -y fonts-roboto`
+    - [ ] `gem install victor`
+    - [ ] `gem install letter_avatar`
+    - [ ] Generate Favicon SVG using colors from Letter Avatar using Roboto Font: ```
+        require 'victor'
+        require 'letter_avatar/colors'
+        color = LetterAvatar::Colors.with_iwanthue("#{APP_NAME}").pack("C*").unpack("H*").first       
+        svg = Victor::SVG.new viewBox: '0 0 128 128' do
+          rect x: 0, y: 0, width: 128, height: 128, fill: "\##{color}"
+          text "#{APP_NAME.upcase[0]}", x: '50%', y: '56%', 'text-anchor': 'middle', 'dominant-baseline': 'middle', 'font-family': 'Roboto Medium', 'font-size': 100, fill: '#FFFFFF', 'fill-opacity': "0.85", 'font-weight': '500'
+          # Original LetterAvatar is font-size: 85, opacity: 0.65
+        end
+        svg.save "public/icon.svg"
+      ```
+    - [ ] Convert to stroke so the font isn't needed: `inkscape --actions="select-all;object-stroke-to-path;export-filename:public/icon.svg;export-do" "public/icon.svg"`
+    - [ ] Export as PNG: `inkscape --export-width=600 --export-type=png --export-filename="public/icon.png" "public/icon.svg"`
+    - The following would be a png only alternative: 
+      - `gem install letter_avatar`
+      - `sudo apt-get install -y imagemagick`
+      - ```
+      require 'letter_avatar'
+      LetterAvatar.setup do |config|
+        config.colors_palette = :iwanthue
+        config.cache_base_path   = 'tmp/'
+        config.pointsize = 400
+      end
+      path = LetterAvatar.generate "#{APP_NAME}", 600
+      FileUtils.mv path, "public/favicon-letter.png"
+      ```
+    - [ ] Link from application.html.erb: ``gsub_file "app/views/layouts/application.html.erb", /<nav>\n(\s*)<ul>/,  "\\0\n\\1  <li><img src=\"/icon.svg\" alt=\"#{APP_NAME} Logo\" width=\"64\"></li>" ``
+    - [ ] `bundle exec rubocop -a && rake test && git add . && git commit -m "Generate Letter Logo" && git push`
   - [ ] Add Basic Database Classes for your app below
     - Either use `generate model` or `generate scaffold`
     - For syntax help: https://rails-generate.com/
