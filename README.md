@@ -164,6 +164,10 @@ While creating templates to reuse for your own projects, you will usually start 
 You will then continue to work with the specific instance and likely find many things which are applicable to the generic template.
 
 To merge your changes back, you can use run `baker --diff my_project.md > patch template.md`. This will read your `my_project` file and for the purpose of comparing mark the todos as unfinished (`[ ]`) and write a normal `git diff` to stdout. 
+### Using LLMs to develop templates
+
+When using ChatGPT and other LLMs to turn blogs/tutorials into bake file templates or let LLMs review existing bake files, you can find some prompts in the [`PROMPTS.md`](PROMPTS.md) file.
+
 
 ## Note on Security
 
