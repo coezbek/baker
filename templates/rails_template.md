@@ -494,6 +494,24 @@
       ```
     - [ ] Link from application.html.erb: ``gsub_file "app/views/layouts/application.html.erb", /<nav>\n(\s*)<ul>/,  "\\0\n\\1  <li><img src=\"/icon.svg\" alt=\"#{APP_NAME} Logo\" width=\"64\"></li>" ``
     - [ ] `bundle exec rubocop -a && rake test && git add . && git commit -m "Generate Letter Logo" && git push`
+  
+  - Adapt Devise for Picocss:
+    - [ ] `rails generate devise:views`
+    - [ ] Disable password confirmation: ``Dir.glob("app/views/devise/registrations/*.html.erb").each { |f| gsub_file f, /  <div class="field">(?:(?!div).)*?:password_confirmation.*?<\/div>\n\n/m, '' } ``
+    - [ ] Unset minimum password length hint for obvious values: ```
+        Dir.glob("app/views/devise/**/*.html.erb").map { |f| 
+          gsub_file f, /(?<=if )@minimum_password_length/, "(\\0 || 0) > 8" 
+        }.any?
+        ```
+    - [ ] Remove all <br/> tags: ``Dir.glob("app/views/devise/**/*.html.erb").each { |f| gsub_file f, /<br \/>/, "" }``
+    - [ ] Wrap all devise forms in <article>: ```
+          Dir.glob("app/views/devise/**/*.html.erb").each { |f| 
+            gsub_file f, /\n<%= form_for/,                "\n<article>\\0"
+            gsub_file f, /\n<%= form_for.*?\n<% end %>/m, "\\0\n</article>"
+          }
+        ```
+    - [ ] `bundle exec rubocop -a && rake test && git add . && git commit -m "Adapt Devise for Picocss" && git push`
+
   - [ ] Add Basic Database Classes for your app below
     - Either use `generate model` or `generate scaffold`
     - For syntax help: https://rails-generate.com/
