@@ -668,35 +668,36 @@
 
 ::var[WRAP_COMMAND]{ssh #{DEPLOY_HOST} -t "#{COMMAND.gsub('"', '\"')}"}
 
-  - Standard Ubuntu Setup before Dokku:
-    - [ ] `sudo apt-get install unattended-upgrades`
+  - [ ] Setup new server - Skip this section if you already have a server with Dokku installed or continue ('y') if you want to perform the setup.
+    - Standard Ubuntu Setup before Dokku:
+      - [ ] `sudo apt-get install unattended-upgrades`
 
-  - Install Dokku on the server:
-    - [ ] `sudo apt-get update`
-    - [ ] Install debconf-utils to be able to debconf-get-selections: `sudo apt-get install -y debconf-utils`
-    - Preconfigure Dokku installation:
-      - [ ] `echo "dokku dokku/vhost_enable boolean true" | sudo debconf-set-selections`
-      - [ ] `echo "dokku dokku/hostname string #{HOST_NAME}" | sudo debconf-set-selections`
-      - [ ] `echo "dokku dokku/skip_key_file boolean true" | sudo debconf-set-selections`
-      - [ ] Output configuration for apt: `sudo debconf-get-selections | grep dokku`
-    - [ ] Install latest Dokku (-N to override previous bootstrap.sh download): `wget -N https://dokku.com/bootstrap.sh ; sudo bash bootstrap.sh`
-    - [ ] Reboot remote: `nohup bash -c "sleep(1); reboot" &`
-    - [ ] Wait for reboot to complete/shell via ruby: `` sleep(20) ``
-    - [ ] Install Let's Encrypt plugin: `sudo dokku plugin:install https://github.com/dokku/dokku-letsencrypt.git`
-      - [ ] Install cron for auto-renew: `dokku letsencrypt:cron-job --add`
-    - [ ] Use same pub key for pushing as for login: `cat ~/.ssh/authorized_keys | dokku ssh-keys:add admin`
-      - Alternatively you could ask the user for which SSH key to use for deployment: ```
-        loop true
-          puts "Enter the path of the SSH pub key which you want to add for dokku `dokku ssh-keys:add`?"
-          puts "Press Enter to use the default key: ~/.ssh/id_rsa.pub"
-          key_name = STDIN.gets.chomp
-          key_name = "~/.ssh/id_rsa.pub" if key_name.empty?
-          break if `test -f #{keyname.shellescape}`
-          puts "Key file not found. Please try again."
-        end
-        ssh root@#{DEPLOY_HOST} 
-        ```
-    - [ ] Install Postgres: `sudo dokku plugin:install https://github.com/dokku/dokku-postgres.git postgres`
+    - Install Dokku on the server:
+      - [ ] `sudo apt-get update`
+      - [ ] Install debconf-utils to be able to debconf-get-selections: `sudo apt-get install -y debconf-utils`
+      - Preconfigure Dokku installation:
+        - [ ] `echo "dokku dokku/vhost_enable boolean true" | sudo debconf-set-selections`
+        - [ ] `echo "dokku dokku/hostname string #{HOST_NAME}" | sudo debconf-set-selections`
+        - [ ] `echo "dokku dokku/skip_key_file boolean true" | sudo debconf-set-selections`
+        - [ ] Output configuration for apt: `sudo debconf-get-selections | grep dokku`
+      - [ ] Install latest Dokku (-N to override previous bootstrap.sh download): `wget -N https://dokku.com/bootstrap.sh ; sudo bash bootstrap.sh`
+      - [ ] Reboot remote: `nohup bash -c "sleep(1); reboot" &`
+      - [ ] Wait for reboot to complete/shell via ruby: `` sleep(20) ``
+      - [ ] Install Let's Encrypt plugin: `sudo dokku plugin:install https://github.com/dokku/dokku-letsencrypt.git`
+        - [ ] Install cron for auto-renew: `dokku letsencrypt:cron-job --add`
+      - [ ] Use same pub key for pushing as for login: `cat ~/.ssh/authorized_keys | dokku ssh-keys:add admin`
+        - Alternatively you could ask the user for which SSH key to use for deployment: ```
+          loop true
+            puts "Enter the path of the SSH pub key which you want to add for dokku `dokku ssh-keys:add`?"
+            puts "Press Enter to use the default key: ~/.ssh/id_rsa.pub"
+            key_name = STDIN.gets.chomp
+            key_name = "~/.ssh/id_rsa.pub" if key_name.empty?
+            break if `test -f #{keyname.shellescape}`
+            puts "Key file not found. Please try again."
+          end
+          ssh root@#{DEPLOY_HOST} 
+          ```
+      - [ ] Install Postgres: `sudo dokku plugin:install https://github.com/dokku/dokku-postgres.git postgres`
 
   - Create the app on dokku:
     - [ ] `dokku apps:create #{APP_NAME}`
