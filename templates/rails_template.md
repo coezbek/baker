@@ -717,7 +717,8 @@
     - [ ] Set RAILS_MASTER_KEY: `ssh #{DEPLOY_HOST} "dokku config:set #{APP_NAME} RAILS_MASTER_KEY=$(cat config/master.key)"`
     - [ ] Add Dokku remote: `git remote add dokku dokku@#{DEPLOY_HOST}:#{APP_NAME}`
     - [ ] Push code to Dokku (this includes migration via bin/docker-entrypoint): `git push dokku main`
-    - [ ] Ensure the application is running at `https://#{HOST_NAME}`
+    - [ ] Open Browser: `bin/browser #{HOST_NAME} 443`
+    - [ ] Ensure the application is running on HOST_NAME
 
     - Update Dokku Instructions:
       - dokku ps:stop --all
