@@ -439,6 +439,7 @@
 
   - [ ] Add Basic Database Classes for your app below
     - Either use `generate model` or `generate scaffold`
+    - For syntax help: https://rails-generate.com/
     - Field names should not include: `type`, `id`, (`hash` or other existing ruby object method names), `created_at|on`, `updated_at|on`, `deleted_at`, `lock_version`, `position`, `parent_id`, `lft`, `rgt`, `quote_value`, `request`, `record`...
       - Check: https://stackoverflow.com/questions/13750009/reserved-names-with-activerecord-models
     - Use the following types for the fields:
