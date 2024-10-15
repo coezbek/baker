@@ -186,6 +186,7 @@ def validate_rails_command(command_line)
   allowed_options = %w[
     --skip-routes --skip-assets --skip-helper --skip-test-framework
     --skip-template-engine --skip-stylesheets
+    --skip-migration --skip-timestamps --skip-namespace
     # Include all other allowed options
   ]
 
