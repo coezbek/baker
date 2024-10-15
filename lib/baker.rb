@@ -345,7 +345,7 @@ class Baker
         }
 
         o.extend Forwardable
-        o.def_delegators :rails_gen_base, :create_file, :copy_file, :inside, :environment, :gem, :generate, :git, :initializer, :lib, :rails_command, :rake, :route
+        o.def_delegators :rails_gen_base, :template, :inject_into_class, :create_file, :copy_file, :inside, :environment, :gem, :generate, :git, :initializer, :lib, :rails_command, :rake, :route
         o.def_delegators :myself, *BakerActions.instance_methods(false)
 
         command = line.command

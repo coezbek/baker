@@ -3,6 +3,26 @@ using Rainbow
 
 module BakerActions
 
+  # Perform substitution (once!) in a file
+  def sub_file(destination_file_name, regex, *args, &block)
+
+    content = File.read(destination_file_name)
+
+    success = content.sub!(regex, *args, &block)
+
+    if success
+      File.open(destination_file_name, "wb") { |file| file.write(content) }
+      puts "sub_file successfully performed for #{destination_file_name}".green
+      return true
+    else
+      puts "Match not found!".red
+      return false
+    end
+  rescue Errno::ENOENT
+    puts "The file #{destination_file_name} does not exist".red
+    return false
+  end
+
   def gsub_file(destination_file_name, regex, *args, &block)
 
     content = File.read(destination_file_name)
@@ -58,8 +78,12 @@ module BakerActions
         to_insert + '\0'
       end
 
-      success = content.gsub!(/#{regex}/, replacement)
-      
+      if config[:once]
+        success = content.sub!(/#{regex}/, replacement)
+      else
+        success = content.gsub!(/#{regex}/, replacement)
+      end
+
       # If gsub! was successful (i.e., flag was found and content replaced)
       if success
         File.open(destination_file_name, "wb") { |file| file.write(content) }

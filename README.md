@@ -154,7 +154,7 @@ This will execute the file from the top to the bottom, stopping at each todo (ba
     ```bash
     ruby -e 'require "rails/generators"; Rails::Generators::Base.new.inject_into_file "config/initializers/trestle.rb", "  config.before_action do |controller|\n    unless !current_user || current_user.has_role?(:admin)\n      flash[:alert] = \\"Administrator access required.\\"\n      redirect_to Trestle.config.root\n    end\n  end\n", before: /  # config.before_action do/'
     ```
-      - Note: The Rails Generator Method/Action are included in scope of the triple backtick Ruby code blocks for convenience.
+      - Note: The [Rails Generator Method/Action](https://garrettdimon.com/journal/posts/rails-generator-actions) are included in scope of the triple backtick Ruby code blocks for convenience. 
       - Note: The Rails Generator Methods do not return errors in many situations, but just print red text! Beware!
 
 ## Workflow when developing your own templates
