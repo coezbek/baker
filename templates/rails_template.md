@@ -434,6 +434,7 @@
                         </summary>
                         <ul dir="rtl">
                           <li><a href="#">Profile</a></li>
+                          <li><%= link_to "Change Password", edit_user_registration_path %></li>
                           <li><%= link_to "Logout", destroy_user_session_path, data: { turbo_method: :delete } %></li>
                         </ul>
                       <% else %>
@@ -524,6 +525,12 @@
             gsub_file f, /\n<%= form_for/,                "\n<article>\\0"
             gsub_file f, /\n<%= form_for.*?\n<% end %>/m, "\\0\n</article>"
           }
+        ```
+    - [ ] Improve the edit_user_registration form: ```
+          # Replace Unhappy?+div with article tag 
+          gsub_file "app/views/devise/registrations/edit.html.erb", /<div>Unhappy\? (.*?)<\/div>/m, "<article>\\1</article>"
+          # Put <small> note below the password fields
+          gsub_file "app/views/devise/registrations/edit.html.erb", / <i>(.*?)<\/i>(\s*)(<%= .*? %>)/m, "\\2\\3\\2<small>\\1</small>"
         ```
     - [ ] `bundle exec rubocop -a && rake test && git add . && git commit -m "Adapt Devise for Picocss" && git push`
 
