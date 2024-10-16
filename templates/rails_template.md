@@ -462,6 +462,17 @@
             HTML
           end
           ```
+    - [ ] Disable wrapping with field_with_errors div: ```
+          create_file "config/initializers/field_with_errors.rb", <<~RUBY
+            # config/initializers/field_with_errors.rb
+            ActionView::Base.field_error_proc = proc do |html_tag, instance|
+              # Disable the built-in wrapping of fields with errors div          
+              # Could use aria-invalid="true" in the following way, but it isn't very pretty
+              # html_tag.gsub(/<input/, "\\0 aria-invalid=\"true\"").html_safe
+              html_tag.html_safe
+            end
+          RUBY
+          ```
     - [ ] `bundle exec rubocop -a`
     - [ ] `git add . && git commit -m "Add Picocss" && git push`
 
