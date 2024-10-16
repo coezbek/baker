@@ -300,6 +300,10 @@
           display: none;
         }
 
+        form[aria-busy="true"] label {
+          white-space: normal;
+        }
+     
         turbo-frame[aria-busy="true"] {
           position: relative;
         }
