@@ -533,7 +533,7 @@
       ```
     - [ ] Link from application.html.erb: ``gsub_file "app/views/layouts/application.html.erb", /<nav>\n(\s*)<ul>/,  "\\0\n\\1  <li><img src=\"/icon.svg\" alt=\"#{APP_NAME} Logo\" width=\"64\"></li>" ``
     - [ ] `bundle exec rubocop -a && rake test && git add . && git commit -m "Generate Letter Logo" && git push`
-  
+
   - Adapt Devise for Picocss:
     - [ ] `rails generate devise:views`
     - [ ] Disable password confirmation: ``Dir.glob("app/views/devise/registrations/*.html.erb").each { |f| gsub_file f, /  <div class="field">(?:(?!div).)*?:password_confirmation.*?<\/div>\n\n/m, '' } ``
@@ -562,6 +562,28 @@
           gsub_file "app/views/devise/registrations/edit.html.erb", / <i>(.*?)<\/i>(\s*)(<%= .*? %>)/m, "\\2\\3\\2<small>\\1</small>"
         ```
     - [ ] `bundle exec rubocop -a && rake test && git add . && git commit -m "Adapt Devise for Picocss" && git push`
+
+  - Adapt View Generation to Picocss:
+    - [ ] Update view partial template: ```create_file "lib/templates/erb/scaffold/partial.html.erb.tt", <<~ERB
+        <article id="<%%= dom_id <%= singular_name %> %>">
+          <dl>
+        <% attributes.reject(&:password_digest?).each do |attribute| -%>
+            <dt><%= attribute.human_name %>:</dt>
+        <% if attribute.attachment? -%>
+            <dd><%%= link_to <%= singular_name %>.<%= attribute.column_name %>.filename, <%= singular_name %>.<%= attribute.column_name %> if <%= singular_name %>.<%= attribute.column_name %>.attached? %></dd>
+        <% elsif attribute.attachments? -%>
+            <dd><%% <%= singular_name %>.<%= attribute.column_name %>.each do |<%= attribute.singular_name %>| %>
+              <div><%%= link_to <%= attribute.singular_name %>.filename, <%= attribute.singular_name %> %></div>
+            <%% end %></dd>
+        <% else -%>
+            <dd><%%= <%= singular_name %>.<%= attribute.column_name %> %></dd>
+        <% end -%>
+        <% end -%>
+          </dl>
+        </article>
+        ERB
+        ```
+    - [ ] `bundle exec rubocop -a && rake test && git add . && git commit -m "Adapt View Generation for Picocss" && git push`
 
   - [ ] Add Basic Database Classes for your app below
     - Either use `generate model` or `generate scaffold`
