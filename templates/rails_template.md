@@ -535,11 +535,17 @@
           gsub_file f, /(?<=if )@minimum_password_length/, "(\\0 || 0) > 8" 
         }.any?
         ```
-    - [ ] Remove all <br/> tags: ``Dir.glob("app/views/devise/**/*.html.erb").each { |f| gsub_file f, /<br \/>/, "" }``
+    - [ ] Remove all <br/> tags: ``Dir.glob("app/views/devise/**/{new,edit}.html.erb").each { |f| gsub_file f, /<br \/>/, "" }``
     - [ ] Wrap all devise forms in <article>: ```
           Dir.glob("app/views/devise/**/*.html.erb").each { |f| 
             gsub_file f, /\n<%= form_for/,                "\n<article>\\0"
             gsub_file f, /\n<%= form_for.*?\n<% end %>/m, "\\0\n</article>"
+          }
+        ```
+    - [ ] Wrap all devise edit forms in <fieldset>: ```
+          Dir.glob("app/views/devise/**/{new,edit}.html.erb").each { |f| 
+            insert_into_file f, "\n  <fieldset>", before: "\n  <div class=\"field\">", once: true
+            insert_into_file f, "\n  </fieldset>", before: "\n\n  <div class=\"actions\">"
           }
         ```
     - [ ] Improve the edit_user_registration form: ```
