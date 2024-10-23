@@ -22,6 +22,13 @@
   - [ ] `git commit -m "rails new #{APP_NAME}"`
   - [ ] `git push --set-upstream origin main`
 
+- Update credential management to the per-environment way of Rails >= 7
+  - [ ] ```gsub_file ".gitignore", /config\/master.key/, "config/**/*.key"```
+  - [ ] `mv config/master.key config/credentials/production.key`
+  - [ ] `mv config/credentials.yml.enc config/credentials/production.yml.enc`
+  - [ ] `git add *.yml.enc .gitignore`
+  - [ ] `git commit -m "Update credential management to Rails >= 6"`
+
 - Configure email defaults:
   - [ ] `ruby -pi -e 'gsub(/from@example.com/, "#{FROM_EMAIL}")' app/mailers/application_mailer.rb`
   - [ ] `git add *.rb && git commit -m "Configure email defaults" && git push`
@@ -759,7 +766,7 @@
 ::var[WRAP_COMMAND]{}
 
   - On the client side, add Dokku remote and deploy:
-    - [ ] Set RAILS_MASTER_KEY: `ssh #{DEPLOY_HOST} "dokku config:set #{APP_NAME} RAILS_MASTER_KEY=$(cat config/master.key)"`
+    - [ ] Set RAILS_MASTER_KEY: `ssh #{DEPLOY_HOST} "dokku config:set #{APP_NAME} RAILS_MASTER_KEY=$(cat config/credentials/production.key)"`
     - [ ] Add Dokku remote: `git remote add dokku dokku@#{DEPLOY_HOST}:#{APP_NAME}`
     - [ ] Push code to Dokku (this includes migration via bin/docker-entrypoint): `git push dokku main`
     - [ ] Open Browser: `bin/browser #{HOST_NAME} 443`
