@@ -339,6 +339,11 @@
             margin-bottom: 0px;
           }
         }
+        
+        /* Add spacing between forms */
+        form + form {
+          margin-top: var(--pico-spacing);
+        }
 
         /* Highlight column */
         .td-primary {
@@ -383,6 +388,17 @@
             border-color var(--pico-transition),
             color var(--pico-transition),
             box-shadow var(--pico-transition);
+        }
+
+        /* Use it to make the main container narrow */
+        .container-sm {
+          min-height: 100vh;
+          max-width: 510px;
+        }
+
+        .container-md {
+          min-height: 100vh;
+          max-width: 700px;
         }
       CSS
       ```
