@@ -763,7 +763,7 @@
     - [ ] Add Dokku remote: `git remote add dokku dokku@#{DEPLOY_HOST}:#{APP_NAME}`
     - [ ] Push code to Dokku (this includes migration via bin/docker-entrypoint): `git push dokku main`
     - [ ] Open Browser: `bin/browser #{HOST_NAME} 443`
-    - [ ] Ensure the application is running on HOST_NAME
+    - [ ] Ensure the application is running at `https://#{HOST_NAME}`
 
     - Update Dokku Instructions:
       - dokku ps:stop --all
