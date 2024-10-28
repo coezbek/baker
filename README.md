@@ -30,6 +30,8 @@ This will sequentially execute the shell commands in the file, mark them as done
 
 You can find a real-world example of a Rails template in [`templates/rails_template.md`](templates/rails_template.md). This also installs `Devise`, `PicoCSS`, an admin interface and deploys using Dokku.
 
+If Baker is almost what you were looking for, but not exactely, then you might want to look at the [Related Works](#related-works) below.
+
 ## Installation
 
 To install Baker, run:
@@ -50,13 +52,37 @@ baker your_bake_file.md
 
 - **Local First**: In contrast to heavyweight automation solutions like [Ansible](https://www.ansible.com/), Baker gives you primarily standard shell commands so you understand what is happening. You don't have to guess if something is a YAML configuration or a command.
 
-- **Imperative**: Baker is imperative programming from the top of the file to the bottom. It explicitly doesn't aim to be declarative like [Terraform](https://www.terraform.io/). Once a command is executed by Baker, you can tinker with the result at will.
+- **Imperative**: Baker is imperative programming from the top of the file to the bottom. It explicitly doesn't aim to be declarative like [Terraform](https://www.terraform.io/). Once a command is executed by Baker, you can tinker with the result at will. Baker does not provide any way to redirect into sub-modules or require other md files.
 
 - **For Humans**: While you might start with an existing template and run it using Baker, it's easy to continue using the bake file to document what else you have done manually and what you still need to do.
 
 ## Basic Features
 
-Baker uses Markdown syntax and includes additional directives to control the execution of the script. Directives use the syntax `::name[content]{attribute1=value1, attribute2=value2}`.
+Baker uses Markdown syntax to **define tasks** which need to be completed. A task for manual execution is identified by an unordered list item `-` followed by a markdown checkbox `[ ]` and instruction text:
+
+```
+- [ ] Your instructions for a manual task
+```
+
+If the instruction text is completely wrapped in **single backticks** it is executed as a bash script:
+
+```
+- [ ] `echo "Hello World"`
+```
+
+To combine description with bash command use a **colon as separator**:
+
+```
+- [ ] Short description of shell code which follows: `echo "Hello World"`
+```
+
+To **utilize Ruby code**, use triple backticks inline:
+
+```
+- [ ] The following is executed as ruby: ```put "Hello World"```
+```
+
+Baker includes additional **directives** to control the execution of the script. Directives use the Markdown syntax `::name[content]{attribute1=value1, attribute2=value2}`.
 
 The following directives are available:
 
@@ -95,7 +121,7 @@ Example `rails_template.md`:
 
 ::var[APP_NAME]
 
-- [ ] Codeblocks which start on a line with a ` - ` or ` - [ ] ` are executed as ruby code if they start with three backticks and are after a colon: ```
+- [ ] Codeblocks which start on a line with ` - [ ] ` are executed as ruby code if they start with three backticks and are after a colon: ```
   puts APP_NAME
   ```
 
@@ -105,7 +131,6 @@ Example `rails_template.md`:
   - [ ] `cd #{APP_NAME}`
   - [ ] `gh repo create --public --source=.`
   - [ ] `echo "# #{APP_NAME} Readme" >> README.md`
-  - [ ] `touch .bash_history`
   - [ ] `git add .`
   - [ ] `git commit -m "rails new #{APP_NAME}"`
   - [ ] `git push --set-upstream origin main`
@@ -138,7 +163,7 @@ This will execute the file from the top to the bottom, stopping at each todo (ba
 
   *Note*: Avoid using `echo '...' | rails c` because `rails console` doesn't return a non-zero exit code when there is an error, so Baker would not stop on error.
 
-- **Insert Text Before a Specific Line**:
+- **Insert Text Before a Specific Line - Various Methods**:
 
   - Using `sed` to insert before a match:
 
@@ -164,10 +189,10 @@ While creating templates to reuse for your own projects, you will usually start 
 You will then continue to work with the specific instance and likely find many things which are applicable to the generic template.
 
 To merge your changes back, you can use run `baker --diff my_project.md > patch template.md`. This will read your `my_project` file and for the purpose of comparing mark the todos as unfinished (`[ ]`) and write a normal `git diff` to stdout. 
+
 ### Using LLMs to develop templates
 
 When using ChatGPT and other LLMs to turn blogs/tutorials into bake file templates or let LLMs review existing bake files, you can find some prompts in the [`PROMPTS.md`](PROMPTS.md) file.
-
 
 ## Note on Security
 
@@ -258,7 +283,19 @@ As a simple example for how to add command line options see the [`lib/baker/plug
 
 - **[Boring Generators](https://github.com/abhaynikam/boring_generators)**: Boring Generators is a great collection of Rails generators that can be used to generate boilerplate code for Rails applications. After installing with `gem install boring_generators` you can use the shell command `boring g boring:xxx:install` to run any of their generators in a Baker file. Their generators are well thought out and can simplify bake scripts.
 
-- **[Jupyter Notebooks](https://jupyter.org/)**: Jupyter notebooks are excellent for documenting and executing code. They provide visual indications of executed code and allow easy re-execution from the beginning. Baker shares the same tinker style but treats completed tasks as done, making it more versatile for project setups.
+- **[Jupyter Notebooks](https://jupyter.org/)**: Jupyter notebooks are excellent for intertwining documentation and executing code. They provide visual indications of already executed code and allow easy re-execution blocks from the beginning. Baker shares the same tinker style but treats completed tasks as done, making it more versatile for project setups. See also [RMarkdown with Shell Integration](https://bookdown.org/yihui/rmarkdown-cookbook/eng-bash.html).
+
+- **Markdown-based Task Runners/Make file tools**: All of the following aim to make fenced code blocks in Markdown executable. Baker differs primarily by providing the backtick short-hand, using Ruby as the primary scripting language and using the checkboxes to tick-off completed tasks. 
+  - **[runme.dev](https://runme.dev/)**: VSCode extension (and CLI tool) for executing code blocks in Markdown on click. Focused on making DevOps documentation executable.
+  - **[xc](https://xcfile.dev/)**: CLI tool which executes fenced code blocks in markdown. To select the blocks to execute, the task name must be given as a command line argument (e.g. `xc build`) and a corresponding markdown heading must exist (e.g. `## build`).
+  - **[mdsh](https://github.com/bashup/mdsh)**: CLI tool which executes fenced code blocks in markdown. Primary scripting language is bash. Written in bash.
+  - **[mdx](https://github.com/dim0x69/mdx)**: CLI tool which executes fenced code blocks in markdown. Uses empty links in heading to designate build tasks (e.g. `# [build]()`). Written in Go.
+  - **[rundown](https://github.com/elseano/rundown)**: CLI tool which executes fenced code blocks in markdown. Uses `<r .../>` tags in Markdown to control behavior. Written in Go.
+  - **[md-tmpl](https://github.com/jpillora/md-tmpl)**: CLI tool which updates markdown with the result of embedded bash commands (e.g. insert a date or output of a command). Written in Go.
+ 
+  - Not Markdown, but similar:
+    - **[org mode](https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-shell.html)**: Embed bash code in org mode. If you fancy the emacs world.
+  - If you want to want to put stuff INTO markdown: [embedmd](https://github.com/campoy/embedmd)
 
 - **[Literate Programming](https://en.wikipedia.org/wiki/Literate_programming)**: Literate programming allows mixing code and documentation in a single file. Baker adopts a similar approach but is focused on executing setup steps.
 
