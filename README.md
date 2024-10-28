@@ -288,8 +288,9 @@ As a simple example for how to add command line options see the [`lib/baker/plug
 - **Markdown-based Task Runners/Make file tools**: All of the following aim to make fenced code blocks in Markdown executable. Baker differs primarily by providing the backtick short-hand, using Ruby as the primary scripting language and using the checkboxes to tick-off completed tasks. 
   - **[runme.dev](https://runme.dev/)**: VSCode extension (and CLI tool) for executing code blocks in Markdown on click. Focused on making DevOps documentation executable.
   - **[xc](https://xcfile.dev/)**: CLI tool which executes fenced code blocks in markdown. To select the blocks to execute, the task name must be given as a command line argument (e.g. `xc build`) and a corresponding markdown heading must exist (e.g. `## build`).
+  - **[makedown](https://github.com/tzador/makedown)**: CLI tool which executes fenced code blocks in markdown. Uses empty links in heading to designate build tasks (e.g. `# [build]()`). Written in Python.
+    - **[mdx](https://github.com/dim0x69/mdx)**: Rewrite of makedown in Go.
   - **[mdsh](https://github.com/bashup/mdsh)**: CLI tool which executes fenced code blocks in markdown. Primary scripting language is bash. Written in bash.
-  - **[mdx](https://github.com/dim0x69/mdx)**: CLI tool which executes fenced code blocks in markdown. Uses empty links in heading to designate build tasks (e.g. `# [build]()`). Written in Go.
   - **[rundown](https://github.com/elseano/rundown)**: CLI tool which executes fenced code blocks in markdown. Uses `<r .../>` tags in Markdown to control behavior. Written in Go.
   - **[md-tmpl](https://github.com/jpillora/md-tmpl)**: CLI tool which updates markdown with the result of embedded bash commands (e.g. insert a date or output of a command). Written in Go.
  
