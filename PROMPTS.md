@@ -3,20 +3,22 @@
 
 ## LLM Prompts for generating bake files
 
+From a blog or tutoria:
+
 ```
-Can you convert your provided instructions into a markdown file of the following style for me? Put everything which I need to manually perform/execute as list items with a checkbox ' - [ ]'. Things which could be executed on the shell can be given by escaping in single backticks and ruby code can be provided by triple backticks. In the Ruby code you can access all common Thor actions (e.g. `copy_file`, `gsub_file`, etc.) as common in Rails Application Templates.
+Can you convert the provided instructions below into a markdown file of the following style for me? Put everything which I need to manually perform/execute as list items with a checkbox ' - [ ]'. Things which could be executed on the shell can be given by escaping in single backticks and ruby code can be provided by triple backticks. In the Ruby code you can access all common Thor actions (e.g. `copy_file`, `gsub_file`, etc.) as common in Rails Application Templates.
 
 To distinguish manual instructions from executable code, for executable code you must separate the human readable part by colon from the code part starting with a single or triple backtick (depending on shell vs ruby). For example:
 
-- [ ] Instruction for humans
-- [ ] Shell code to execute: `echo "Hello World"`
-  or:
+- [ ] ...instruction for humans which require manual...
+- [ ] short description of shell code which follows: `echo "Hello World"`
+  or if shell command is easy or self-explanatory:
   - [ ] `echo "Self explanatory shell code can be inline"`
-- [ ] Ruby code to execute: ```puts "Hello World"```
-  or: 
+- [ ] short description of ruby code which follows: ```puts "Hello World"```
+  or if ruby code is self-explanatory: 
   - [ ] ```puts "Self explanatory Ruby code can be inline"```
 
-Important: Fenced code blocks starting with '```ruby' are executed, so you can't use them as part of manual tasks to provide example content to the user. Rather, ideally use gsub_file or similar to perform the update by scripting or use '```rb' to denote non-executable Ruby code.
+Important: Fenced code blocks starting with '```ruby' are executed with ruby, so you can't use them as part of manual tasks to provide example content to the user. Rather, ideally use gsub_file or similar to perform the update by scripting or use '```rb' to denote non-executable Ruby code.
 
 Keep the generated markdown lean and clean and tight. Bold highlights should be used sparingly. If necessary use headings to separate. 
 
@@ -26,7 +28,6 @@ To give you an idea, I am providing you with a comprehensive example of a such a
 
 Now please convert the instructions per our previous conversation in this format.
 ```
-
 
 ## LLM Prompt to review bake files
 
