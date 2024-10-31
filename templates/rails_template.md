@@ -45,11 +45,11 @@
   - [ ] `rails generate controller Home index --skip-routes`
   - [ ] Secure all controllers:
     ```ruby
-    inject_into_class "app/controllers/application_controller.rb", ApplicationController, "  before_action :authenticate_user!\n"
+    inject_into_class "app/controllers/application_controller.rb", 'ApplicationController', "  before_action :authenticate_user!\n"
     ```
   - [ ] Except Home controller:
     ```ruby
-    inject_into_class "app/controllers/home_controller.rb", HomeController, "  skip_before_action :authenticate_user!, only: :index\n"
+    inject_into_class "app/controllers/home_controller.rb", 'HomeController', "  skip_before_action :authenticate_user!, only: :index\n"
     ```
   - [ ] Insert the flash into application.html.erb: ```inject_into_file "app/views/layouts/application.html.erb", after: "<body>\n" do
           <<~HTML.indent(4)
