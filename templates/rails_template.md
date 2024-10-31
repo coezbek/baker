@@ -843,10 +843,9 @@
       - dokku ps:stop --all
       - dokku-update
 
-
-  - [ ] Make modern browser also work on Opera on Android:
-  https://blog.saeloun.com/2024/03/18/rails-7-2-adds-allow-browser-to-set-minimum-versions/
-  https://github.com/rails/rails/pull/50505
+  - [ ] Make modern browser also work on Opera on Android
+        https://blog.saeloun.com/2024/03/18/rails-7-2-adds-allow-browser-to-set-minimum-versions/
+        https://github.com/rails/rails/pull/50505
 
   - [ ] https://acuments.com/rails-serve-static-files-with-nginx.html
 
