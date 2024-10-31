@@ -521,6 +521,42 @@
         gsub_file "app/views/pwa/manifest.json.erb", /"theme_color": "red"/, %Q["theme_color": "##{color}"]
       ```
     - [ ] Convert to stroke so the font isn't needed: `inkscape --actions="select-all;object-stroke-to-path;export-filename:public/icon.svg;export-do" "public/icon.svg"`
+    - Generate favicon ICO
+      - [ ] `dpkg -l icoutils || sudo apt-get install -y icoutils`
+      - [ ] Use bash script to generate favicon.ico: ```create_file "bin/favicon", <<~'BASH'
+            #!/bin/bash
+
+            # Script to generate favicon.ico from icon.svg
+            # Usage: bin/favicon [ICON=icon.svg] [FAVICON=favicon.ico]
+            # Default values are icon.svg and favicon.ico
+
+            ICON=${1:-icon.svg}
+            FAVICON=${2:-favicon.ico}
+
+            cd public
+
+            # Exit if $ICON does not exist
+            if [ ! -f $ICON ]; then
+              echo "File $ICON does not exist"
+              exit 1
+            fi
+
+            for size in 16 24 32 48 64 96 128 256; do
+              inkscape --export-filename $size.png -w $size -h $size $ICON >/dev/null 2>/dev/null
+            done
+
+            for size in 16 24 32 48; do
+              convert -colors 256 +dither $size.png png8:$size-8.png
+              convert -colors 16  +dither $size-8.png $size-4.png
+            done
+
+            icotool -c -o $FAVICON 16.png 24.png 32.png 48.png 16-8.png 24-8.png 32-8.png 48-8.png 16-4.png 24-4.png 32-4.png 48-4.png 64.png 96.png -r 128.png -r 256.png
+
+            rm 16.png 24.png 32.png 48.png 16-8.png 24-8.png 32-8.png 48-8.png 16-4.png 24-4.png 32-4.png 48-4.png 64.png 96.png 128.png 256.png
+          BASH
+        ```
+      - [ ] Make script executable: `chmod +x bin/favicon`
+      - [ ] `bin/favicon`
     - [ ] Export as PNG: `inkscape --export-width=600 --export-type=png --export-filename="public/icon.png" "public/icon.svg"`
     - The following would be a png only alternative: 
       - `gem install letter_avatar`
