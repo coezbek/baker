@@ -723,6 +723,122 @@
     - [ ] `bundle exec rubocop -a`
     - [ ] `git add . && git commit -m "Add Font Awesome" && git push`
 
+  - Add Rails Settings Cached and install a wait list
+    - [ ] `bundle add rails-settings-cached`
+    - [ ] `rails g settings:install`
+    - [ ] Insert Wait-List Limit: ```insert_into_file "app/models/setting.rb", <<~RUBY.indent(2), after: "Define your fields\n"
+          # Wait-List limit indicates the maximum number of users who can join the app
+          # 0 == nobody can sign-up, -1 == unlimited sign-ups
+          field :wait_list_limit, type: :integer, default: 0
+        RUBY
+        ```
+    - [ ] Create `Waitlist` model: `rails generate model Waitlist email:string status:integer`
+    - [ ] Migrate the database: `rails db:migrate`
+    - [ ] Add validations and enum to `Waitlist` model:
+      ```ruby
+      inject_into_class "app/models/waitlist.rb", "Waitlist", <<~'RUBY'
+        validates :email, presence: true
+        enum :status, { pending: 0, invited: 1 }, default: :pending
+      RUBY
+      ```
+    - [ ] Add `is_waitlist_active?` method to `Setting` model:
+      ```ruby
+      inject_into_class "app/models/setting.rb", "Setting", <<~'RUBY'
+        def self.is_waitlist_active?
+          wait_list_limit == 0 || (wait_list_limit > 0 && User.count >= wait_list_limit)
+        end
+      RUBY
+      ```
+    - [ ] Create custom Devise `RegistrationsController` to handle waitlist logic:
+      ```ruby
+      create_file "app/controllers/users/registrations_controller.rb", <<~'RUBY'
+        class Users::RegistrationsController < Devise::RegistrationsController
+          def new
+            if Setting.is_waitlist_active?
+              redirect_to waitlist_path, alert: "Registrations are currently closed."
+            else
+              super
+            end
+          end
+
+          def create
+            if Setting.is_waitlist_active?
+              redirect_to waitlist_path, alert: "Registrations are currently closed."
+            else
+              super
+            end
+          end
+        end
+      RUBY
+      ```
+    - [ ] Add to routes: ```gsub_file "config/routes.rb", /devise_for :users\n/, 'devise_for :users, controllers: { registrations: "users/registrations" }'```
+    - [ ] Create `WaitlistController` with `new` and `create` actions:
+      ```ruby
+      create_file "app/controllers/waitlist_controller.rb", <<~'RUBY'
+        class WaitlistController < ApplicationController
+          skip_before_action :authenticate_user!
+
+          def new
+            @waitlist_entry = Waitlist.new
+          end
+
+          def create
+            @waitlist_entry = Waitlist.new(waitlist_params)
+            if @waitlist_entry.save
+              redirect_to root_path, notice: "You have been added to the waitlist."
+            else
+              render :new
+            end
+          end
+
+          private
+
+          def waitlist_params
+            params.require(:waitlist).permit(:email)
+          end
+        end
+      RUBY
+      ```
+    - [ ] Add routes for `WaitlistController` using "waitlist" as a single word:
+      ```ruby
+      route 'get "waitlist", to: "waitlist#new"'
+      route 'post "waitlist", to: "waitlist#create"'
+      ```
+    - [ ] Create view for `Waitlist#new` action:
+      ```ruby
+      create_file "app/views/waitlist/new.html.erb", <<~'ERB'
+        <% content_for :container_class, "container container-sm" %>
+        <h1>Join the Waitlist</h1>
+        <%= form_with model: @waitlist_entry, url: waitlist_path do |f| %>
+          <%= f.label :email %>
+          <%= f.email_field :email %>
+          <%= f.submit "Join" %>
+        <% end %>
+      ERB
+      ```
+    - [ ] Update navigation to only switch the "Sign up" link to "Join Waitlist" when registrations are closed:
+      ```ruby
+      gsub_file "app/views/layouts/application.html.erb", /^(\s*)<li>(<%= link_to "Sign up", new_user_registration_path %>)<\/li>\n/, <<~RUBY
+        \\1<li>
+        \\1  <% if Setting.is_waitlist_active? %>
+        \\1    <%= link_to "Join Waitlist", waitlist_path %>
+        \\1  <% else %>
+        \\1    \\2
+        \\1  <% end %>
+        \\1</li>
+        RUBY
+      ```
+    - Enter Tag line for Homepage
+::var[TAG_LINE]
+    - [x] Replace HomeController view: ```create_file "app/views/home/index.html.erb", <<~ERB, force: true
+          <% content_for :container_class, "container container-md hero" %>
+          <h1>#{APP_NAME.capitalize}</h1>
+          <p>#{TAG_LINE}</p>
+          <%= link_to "Join Waitlist", waitlist_path, role: "button" if Setting.is_waitlist_active? %>
+        ERB
+      ```
+    - [ ] `bundle exec rubocop -a && rake test && git add . && git commit -m "Implement waitlist feature" && git push`
+
   - Customize Home Page
     - [ ] Edit `app/views/home/index.html.erb` to show a welcome message and a link to the events page
 
