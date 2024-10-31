@@ -308,7 +308,7 @@
           display: none;
         }
 
-        form[aria-busy="true"] label {
+        form[aria-busy="true"] {
           white-space: normal;
         }
      
