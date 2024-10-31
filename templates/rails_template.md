@@ -24,6 +24,7 @@
 
 - Update credential management to the per-environment way of Rails >= 7
   - [ ] ```gsub_file ".gitignore", /config\/master.key/, "config/**/*.key"```
+  - [ ] `mkdir config/credentials`
   - [ ] `mv config/master.key config/credentials/production.key`
   - [ ] `mv config/credentials.yml.enc config/credentials/production.yml.enc`
   - [ ] `git add *.yml.enc .gitignore`
