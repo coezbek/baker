@@ -662,9 +662,14 @@
   - Add Trestle Admin
     - [ ] `bundle add trestle`
     - [ ] `rails g trestle:install`
-    - [ ] `rails g trestle:resource User`
-    - [ ] `rails g trestle:resource Event`
-    - [ ] `rails g trestle:resource Participation`
+    - [ ] Add Trestle Admin for each model: ```rails_run <<~RUBY
+          Rails.application.eager_load!
+          ApplicationRecord.subclasses.map(&:name).all? { |model| 
+            puts `rails g trestle:resource \#{model}`
+            next $?.success?
+          }
+        RUBY
+      ```
     - [ ] ``gsub_file "config/initializers/trestle.rb", '# config.root = "/"', 'config.root = "/"'``
     - [ ] `rails db:migrate`
     - [ ] `bundle exec rubocop -a`
