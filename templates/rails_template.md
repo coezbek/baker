@@ -501,8 +501,8 @@
     - [ ] `git add . && git commit -m "Add Picocss" && git push`
 
   - Generate Favicon for App:
-    - [ ] `sudo apt-get install -y inkscape`
-    - [ ] `sudo apt install -y fonts-roboto`
+    - [ ] `dpkg -l inkscape || sudo apt install -y inkscape`
+    - [ ] `dpkg -l fonts-roboto || sudo apt install -y fonts-roboto`
     - [ ] `gem install victor`
     - [ ] `gem install letter_avatar`
     - [ ] Generate Favicon SVG using colors from Letter Avatar using Roboto Font: ```
