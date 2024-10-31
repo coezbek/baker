@@ -498,6 +498,7 @@
             end
           RUBY
           ```
+    - [ ] Update background color in PWA Manifest to white: ```gsub_file "app/views/pwa/manifest.json.erb", /"background_color": "red"/, %Q["background_color": "#FFFFFF"]```
     - [ ] `bundle exec rubocop -a`
     - [ ] `git add . && git commit -m "Add Picocss" && git push`
 
@@ -516,6 +517,8 @@
           # Original LetterAvatar is font-size: 85, opacity: 0.65
         end
         svg.save "public/icon.svg"
+        # Replace Theme Color in PWA manifest
+        gsub_file "app/views/pwa/manifest.json.erb", /"theme_color": "red"/, %Q["theme_color": "##{color}"]
       ```
     - [ ] Convert to stroke so the font isn't needed: `inkscape --actions="select-all;object-stroke-to-path;export-filename:public/icon.svg;export-do" "public/icon.svg"`
     - [ ] Export as PNG: `inkscape --export-width=600 --export-type=png --export-filename="public/icon.png" "public/icon.svg"`
