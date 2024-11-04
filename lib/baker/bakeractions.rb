@@ -50,6 +50,19 @@ module BakerActions
     Net::SSH::Config.for(host)[:user]
   end
 
+  def rails_run(command, environment: nil)
+
+    Tempfile.open(["rails_run", '.rb']) do |tempfile|
+      tempfile.write(command)
+      tempfile.flush
+
+      result = pty_spawn(%Q(rails runner #{tempfile.path} -w #{environment ? "--environment #{environment}" : ""}))
+
+      return result == 0
+    end
+
+  end
+
   # Injects content (given either as second parameter or block) into destination file
   # at the position specified by a regex as either :before or :after.
   #
@@ -186,6 +199,70 @@ module BakerActions
     end
 
     formatted_lines.join("\n")
+  end
+
+  # Spawn a PTY and run the given command
+  def pty_spawn(command)
+    require 'pty'
+
+    begin
+      PTY.spawn(command) do |stdout_and_stderr, stdin, pid|
+
+        # Input Thread
+        input_thread = Thread.new do
+
+          STDIN.raw do |io|
+            loop do
+              break if pid.nil?
+              begin
+                if io.wait_readable(0.1)
+                  data = io.read_nonblock(1024)
+                  stdin.write data
+                end
+              rescue IO::WaitReadable
+                # No input available right now
+              rescue EOFError
+                break
+              rescue Errno::EIO
+                break
+              end
+            end
+          end
+        end
+
+        # Pipe stdout and stderr to the parser
+        begin
+
+          begin
+            winsize = $stdout.winsize
+          rescue Errno::ENOTTY
+            winsize = [0, 120] # Default to 120 columns
+          end
+          # Ensure the child process has the proper window size, because 
+          #  - tools such as yarn use it to identify tty mode
+          #  - some tools use it to determine the width of the terminal for formatting
+          stdout_and_stderr.winsize = winsize
+          
+          stdout_and_stderr.each_char do |char|
+
+            print char
+
+          end
+        rescue Errno::EIO
+          # End of output
+        end
+
+        # Wait for the child process to exit
+        Process.wait(pid)
+        pid = nil
+        input_thread.join
+        return exit_status = $?.exitstatus
+      end
+
+    rescue PTY::ChildExited => e
+      puts "The child process exited: #{e}"
+      return 1
+    end
   end
 
 end
