@@ -679,7 +679,7 @@
         ```
     - [ ] `rails db:migrate`
     - [ ] `bundle exec rubocop -a`
-    - [ ] `rake test`
+    - [ ] `rake test:all`
     - [ ] `git add . && git commit -m "Add Basic Database Classes for #{APP_NAME}" && git push`
 
   - Add Trestle Admin
