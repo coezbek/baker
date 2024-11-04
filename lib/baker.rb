@@ -18,6 +18,7 @@ using Rainbow
 require_relative 'baker/bakerlib'
 require_relative 'baker/bakeractions'
 require_relative 'baker/plugins'
+require_relative 'baker/baker_config'
 
 class Baker
   include BakerActions
@@ -193,7 +194,14 @@ class Baker
 
   end
 
+  def load_config
+    Dir.mkdir(File.expand_path('~/.baker')) unless Dir.exist?(File.expand_path('~/.baker'))
+    @config = BakerConfig.new(File.expand_path('~/.baker/config.yml'))
+  end
+
   def run
+
+    load_config
 
     create_options_parser
 
@@ -258,7 +266,19 @@ class Baker
 
             use_tty = true
             if use_tty
-              line.attributes = TTY::Prompt.new.ask(" → Please enter your value for variable '#{line.content}':\n".yellow, value: initial_value)
+              prompt = TTY::Prompt.new
+
+              history = @config[:history, line.content.to_sym] || []
+
+              history.each { |h| prompt.reader.add_to_history(h) }
+
+              line.attributes = prompt.ask(" → Please enter your value for variable '#{line.content}':\n".yellow, value: initial_value)
+
+              history << line.attributes
+
+              @config[:history, line.content.to_sym] = history.uniq
+              @config.flush
+
             else
               puts " → Please enter your value for variable '#{line.content}':".yellow
               line.attributes = STDIN.gets().strip
