@@ -510,16 +510,16 @@ class Baker
             line_indent = line_indent.yellow
             first_line_indent = true
 
-            parser = VTParser.new do |action, ch, n, a|
+            parser = VTParser.new do |action|
               print line_indent if first_line_indent
               first_line_indent = false
 
-              to_output = VTParser.to_ansi(action, ch, n, a)
+              to_output = action.to_ansi
 
-              case action
+              case action.action_type
               when :print, :execute, :put, :osc_put
-                if ch == "\r"
-                  print ch
+                if action.ch == "\r"
+                  print action.ch
                   print line_indent
                   next
                 end
@@ -529,10 +529,10 @@ class Baker
                   print line_indent
                   next
                 else
-                  if ch == 'G'
+                  if action.ch == 'G'
                     # puts "to_output: #{to_output.inspect} action: #{action} ch: #{ch.inspect}"
                     # && parser.params.size == 1
-                    print "\e[#{parser.params[0] + line_indent_width}G"
+                    print "\e[#{action.params[0] + line_indent_width}G"
 
                     next
                   end

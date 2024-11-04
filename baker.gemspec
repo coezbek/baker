@@ -39,7 +39,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "tty-prompt", "~> 0.23"
   spec.add_dependency "tty-reader", "~> 0.9"
   spec.add_dependency "rainbow", "~> 3.1"
-  spec.add_dependency "vtparser", "~> 0.1.0"
+  spec.add_dependency "vtparser", "~> 0.3"
   spec.add_dependency "net-ssh", "~> 7.3"
 
   # For more information and examples about making a new gem, check out our

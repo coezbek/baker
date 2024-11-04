@@ -14,7 +14,7 @@ gemspec
 # 
 # gem "rails", "~> 7.0"
 # 
-# gem "vtparser", "~> 0.1.0"
+# gem "vtparser", "~> 0.3", path: "../vtparser"
 # 
 # gem "net-ssh", "~> 7.3"
 #
