@@ -400,19 +400,38 @@
 
         /* Use it to make the main container narrow */
         .container-sm {
-          min-height: 100vh;
           max-width: 510px;
         }
 
         .container-md {
-          min-height: 100vh;
           max-width: 700px;
+        }
+
+        /* Use to ensure header, main content, and footer layed out correctly */
+        html body {
+          display: grid;
+          grid-template-rows: auto 1fr auto;
+          align-items: start;
+          min-height: 100vh
+        }
+
+        .hero {
+          display: grid;
+          grid-template-columns: 1fr;
+          column-gap: var(--pico-homepage-spacing-horizontal);
+          row-gap: calc(var(--pico-homepage-spacing-vertical)/2);
+          justify-items: center;
+          margin-top: calc(var(--pico-homepage-spacing-vertical)/2);
+          margin-bottom: 0;
         }
       CSS
       ```
     - Wrap body content in a main container:
-      - [ ] `ruby -pi -e 'gsub(/<body>/, %q[<body>\n    <main class="container">])' app/views/layouts/application.html.erb`
-      - [ ] `ruby -pi -e 'gsub(/<\\/body>/, %q[  <\/main>\n  <\/body>])' app/views/layouts/application.html.erb`
+      - [ ] Opening tag: ```inject_into_file "app/views/layouts/application.html.erb", <<~ERB.indent(4), after: "<body>\n"
+          <main class="<%= content_for(:container_class) || "container" %>">
+        ERB
+        ```
+      - [ ] Closing tag: ```inject_into_file "app/views/layouts/application.html.erb", "    </main>\n", before: "  </body>"```
     - [ ] Add partial for flash messages: ```create_file "app/views/application/_flash.html.erb", <<~ERB
             <% # Render with: render partial: "error", locals: { error_key: ..., errors_to_print: ... }
               errors_to_print = Array(errors_to_print)
@@ -594,6 +613,10 @@
             insert_into_file f, "\n  <fieldset>", before: "\n  <div class=\"field\">", once: true
             insert_into_file f, "\n  </fieldset>", before: "\n\n  <div class=\"actions\">"
           }
+        ```
+    - [ ] Wrap devise view in container-sm: ```inject_into_file "app/views/layouts/application.html.erb", <<~ERB.indent(4), before: "    <main" 
+          <% content_for(:container_class, "container container-sm") if devise_controller? %>
+        ERB
         ```
     - [ ] Improve the edit_user_registration form: ```
           # Replace Unhappy?+div with article tag 
