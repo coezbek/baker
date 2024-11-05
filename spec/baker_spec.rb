@@ -157,6 +157,38 @@ RSpec.describe Recipe do
       expect(Recipe.from_s(input).to_s).to eq(input)
     end    
 
+    it '.from_s to_s round-trip 3' do
+    
+      input = <<~MD
+        - [ ] test1
+        - [ ] test2
+        - Test Section:
+          - [ ] test 3.1
+        - [ ] Test Section:
+          - Test 4.1
+        - [ ] Test Section with Command:
+          ```ruby
+           puts 'test'
+          ```
+        - [ ] test 4
+      MD
+      recipe = Recipe.from_s(input)
+    
+      expect(recipe.to_s).to eq(input)
+    end   
+
+    it '.from_s to_s round-trip 3 minimal' do
+    
+      input = <<~MD
+        - [ ] Test Section:
+          - Test 4.1
+      MD
+      recipe = Recipe.from_s(input)
+    
+      expect(recipe.to_s).to eq(input)
+    end   
+    
+
     it 'creates a Recipe object from a simple var string' do
       recipe = Recipe.from_s("::var[test]{value}")
       

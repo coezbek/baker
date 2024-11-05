@@ -22,10 +22,10 @@ class Recipe
     s.each_line.with_index { |line, index|
 
       if multiline
-        multiline[:lines] << line
-
+        
         case multiline[:multiline_type]
         when :ruby, :shell
+          multiline[:lines] << line
 
           if line =~ /^\s*```\s*$/
             
@@ -51,6 +51,8 @@ class Recipe
 
           # If line starts with ``` we have a new block
           if line =~ /^\s*```(.*\z)/m
+
+            multiline[:lines] << line
 
             # If this block starts with ```bash or ```sh we have a shell block
             command = $1
@@ -85,8 +87,7 @@ class Recipe
             next
           end
             
-          # Line did not start with ```
-
+          # Line did not start with ```, we store this as a manual block and continue with the next line
           j.steps << RecipeStep.new(
             multiline[:lines],
             type: :manual,
