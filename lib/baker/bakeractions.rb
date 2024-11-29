@@ -15,7 +15,7 @@ module BakerActions
       puts "sub_file successfully performed for #{destination_file_name}".green
       return true
     else
-      puts "Match not found!".red
+      puts "Match not found for regex: #{regex.inspect}".red
       return false
     end
   rescue Errno::ENOENT
@@ -34,7 +34,7 @@ module BakerActions
       puts "gsub_file successfully performed for #{destination_file_name}".green
       return true
     else
-      puts "Match not found!".red
+      puts "Match not found for regex: #{regex.inspect}".red
       return false
     end
   rescue Errno::ENOENT
