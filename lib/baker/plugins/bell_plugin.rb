@@ -21,7 +21,7 @@ Baker.plugin.register(:after_options) do
   next if @no_bell
   last_task_started = Time.now
 
-  Baker.plugin.register([:before_execution, :after_execution]) do
+  Baker.plugin.register([:before_execution, :after_execution_complete]) do
     
     # puts "Since last manual input #{Time.now - last_task_started} seconds have passed." if baker.debug
     
@@ -34,7 +34,7 @@ Baker.plugin.register(:after_options) do
         print "\a" # Ring the bell
       end
 
-    when :after_execution
+    when :after_execution_complete
 
       # puts "Resetting time to #{Time.now}." if baker.debug
       last_task_started = Time.now

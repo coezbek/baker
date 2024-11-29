@@ -13,7 +13,8 @@
 #  :before_line                        - before the line is undergoing variable expansion. Will be called even for lines which are completed ([x])
 #  :before_expansion, :after_expansion - before/after the line is undergoing variable expansion. This is only called for tasks :shell and :ruby
 #  :before_execution                   - before the line is executed.
-#  :after_execution                    - after the line is executed which includes printing error messages and marking the line as completed
+#  :after_execution                    - after the line is executed, but before the line is marked as completed
+#  :after_execution_complete           - after the line is executed which includes printing error messages and marking the line as completed
 #  :before_save, :after_save           - before/after the baker file is saved (which happens after each line with a task/command)
 #  :all                                - all of the above
 #
@@ -46,7 +47,7 @@ class Plugins
     :before_load, :after_load, 
     :before_line, 
     :before_expansion, :after_expansion, 
-    :before_execution, :after_execution, 
+    :before_execution, :after_execution, :after_execution_complete, 
     :before_save, :after_save
   ]
 
@@ -74,7 +75,7 @@ class Plugins
   #
   # Returns: :continue, :skip, :ask
   #
-  def run(action_type, baker:, line: nil, command: nil, context: nil)
+  def run(action_type, baker:, line: nil, output: nil, command: nil, context: nil)
 
     raise "Action type must be one of #{ALL_TRIGGERS.inspect} but is #{action_type}" unless ALL_TRIGGERS.include?(action_type)
 
@@ -82,7 +83,7 @@ class Plugins
 
       # puts "Running plugin block: #{block.source_location[0]}:#{block.source_location[1]}" if baker.debug
 
-      result = OpenStruct.new(line: line, baker: baker, command: command, context: context, action_type: action_type).instance_eval(&block)
+      result = OpenStruct.new(line: line, baker: baker, output: output, command: command, context: context, action_type: action_type).instance_eval(&block)
 
       #  - :exit, :abort, false           - abort processing and exit
       #  - :skip                    - skip this block (skips all other plugins)

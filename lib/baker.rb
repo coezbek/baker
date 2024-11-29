@@ -432,7 +432,7 @@ class Baker
         puts
         line.mark_complete
 
-        case Baker.plugins.run(:after_execution, line: line, baker: self, command: command, context: @context)
+        case Baker.plugins.run(:after_execution_complete, line: line, baker: self, command: command, context: @context)
         when :skip
           next
         when :ask
@@ -496,6 +496,7 @@ class Baker
         puts (" → Executing shell code: #{"\n" if line_will_break}#{to_display}").yellow
 
         mode = :ptyspawn_with_parser
+        captured_output = []
 
         case mode
 
@@ -512,6 +513,7 @@ class Baker
           require 'open3'
           Open3.popen2e(command) do |stdin, stdout_and_stderr, wait_thr|
             stdout_and_stderr.each_line do |line|
+              captured_output << line
               # Remove trailing whitespace and apply formatting
               formatted_line = line.rstrip.indent(2).gsub(/^/, '▐').indent(3)
               puts formatted_line
@@ -591,6 +593,8 @@ class Baker
 
                 stdout_and_stderr.each_char do |char|
 
+                  captured_output << char
+
                   parser.parse(char)
 
                 end
@@ -613,6 +617,21 @@ class Baker
           end
         end
 
+        output = { 
+          command_output: captured_output.join, # Not all output modes capture the output text of the command!
+          exit_status: exit_status,
+          successfully_terminated: result
+        }
+
+        case Baker.plugins.run(:after_execution, line: line, output: output, baker: self, command: command, context: @context)
+        when :skip
+          next
+        when :ask
+          puts " ? Press y/Y to continue. Any other key to cancel and exit baker.".yellow
+          exit(1) if prompt_user_choice(line) == :abort
+          asked_before = true
+        end # Fallthrough: :continue
+
         puts ""
 
         if result
@@ -620,8 +639,7 @@ class Baker
           puts
           line.mark_complete
         else
-          error = $?.to_s
-
+          error = exit_status.to_s
           if error.length < 80 && !(error =~ /\n/)
             puts "  → Failed with error: #{error}".red
           else
@@ -636,7 +654,7 @@ class Baker
           exit 1
         end
 
-        case Baker.plugins.run(:after_execution, line: line, baker: self, command: command, context: @context)
+        case Baker.plugins.run(:after_execution_complete, line: line, output: output, baker: self, command: command, context: @context)
         when :skip
           next
         when :ask
@@ -699,7 +717,7 @@ class Baker
           exit(1)
         end
 
-        next if run_plugins(:after_execution, line: line) == :skip
+        next if run_plugins(:after_execution_complete, line: line) == :skip
 
       end
 

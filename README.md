@@ -256,10 +256,15 @@ To create a plugin, create a Ruby file in the `plugins` directory and register a
 #
 #  :before_options, :after_options     - before/after the command line options are processed
 #  :before_load, :after_load           - before/after the baker file is loaded
-#  :before_line                        - before the line is undergoing variable expansion. Will be called even for lines which are completed ([x])
-#  :before_expansion, :after_expansion - before/after the line is undergoing variable expansion. This is only called for tasks :shell and :ruby
-#  :before_execution                   - before the line is executed.
-#  :after_execution                    - after the line is executed which includes printing error messages and marking the line as completed
+#  :before_line                        - before the line is undergoing variable expansion. 
+#                                        Will be called even for lines which are completed ([x])
+#  :before_expansion, :after_expansion - before/after the line is undergoing variable expansion. 
+#                                        This is only called for tasks :shell and :ruby
+#  :before_execution                   - before the line is executed
+#  :after_execution                    - after the line is executed, but before printing error messages
+#                                        and marking the line as completed
+#  :after_execution_complete           - after the line is executed and error messages have been 
+#                                        printed and the line was printed as completed
 #  :before_save, :after_save           - before/after the baker file is saved (which happens after each line with a task/command)
 #  :all                                - all of the above
 #

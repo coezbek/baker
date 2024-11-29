@@ -2,7 +2,7 @@
 #
 # Reload gem paths after running a gem install command
 #
-Baker.plugin.register(:after_execution) do
+Baker.plugin.register(:after_execution_complete) do
 
   next unless line.type == :shell
 
