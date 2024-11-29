@@ -854,14 +854,14 @@
       ```
     - Enter Tag line for Homepage
 ::var[TAG_LINE]
-    - [x] Replace HomeController view: ```create_file "app/views/home/index.html.erb", <<~ERB, force: true
+    - [ ] Replace HomeController view: ```create_file "app/views/home/index.html.erb", <<~ERB, force: true
           <% content_for :container_class, "container container-md hero" %>
           <h1>#{APP_NAME.capitalize}</h1>
           <p>#{TAG_LINE}</p>
           <%= link_to "Join Waitlist", waitlist_path, role: "button" if Setting.is_waitlist_active? %>
         ERB
       ```
-    - [ ] `bundle exec rubocop -a && rake test && git add . && git commit -m "Implement waitlist feature" && git push`
+    - [ ] `bundle exec rubocop -a && rake test:all && git add . && git commit -m "Implement waitlist feature" && git push`
 
   - Customize Home Page
     - [ ] Edit `app/views/home/index.html.erb` to show a welcome message and a link to the events page
