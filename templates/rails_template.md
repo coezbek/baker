@@ -663,13 +663,14 @@
       - datetime
       - boolean
       - references
-    - [ ] `rails generate scaffold Event name:string date:datetime location:string description:text event_type:string 'leg1distance:decimal{6,3}' 'leg2distance:decimal{6,3}' 'leg3distance:decimal{6,3}'`
-    - [ ] `rails generate scaffold Participation user:references event:references planned:boolean performed:boolean`
-    - [ ] Ensure participations are deleted when user or event is deleted: ```
+    - Example One:
+      - [ ] `rails generate scaffold Event name:string date:datetime location:string description:text event_type:string 'leg1distance:decimal{6,3}' 'leg2distance:decimal{6,3}' 'leg3distance:decimal{6,3}'`
+      - [ ] `rails generate scaffold Participation user:references event:references planned:boolean performed:boolean`
+      - [ ] Ensure participations are deleted when user or event is deleted: ```
         inject_into_file "app/models/user.rb", "  has_many :participations, dependent: :destroy\n", after: "ApplicationRecord\n" 
         inject_into_file "app/models/event.rb", "  has_many :participations, dependent: :destroy\n", after: "ApplicationRecord\n"
         ```
-    - [ ] Ensure integration tests continue to work: ```
+      - [ ] Ensure integration tests continue to work: ```
         ['events', 'participations'].all? { |s| 
           gsub_file "test/controllers/#{s}_controller_test.rb", /setup do/, <<~RUBY.indent(2)
             include Devise::Test::IntegrationHelpers
@@ -678,6 +679,30 @@
           RUBY
         }
         ```
+    - Example Two:
+      - [ ] `rails generate migration AddAttributesToUsers last_name:string first_name:string`
+      - [ ] `rails generate scaffold Requisition name:string first_execution:datetime rrule:string description:text requester:references reporter:references`
+      - [ ] Adjust foreign key: ``gsub_file Dir.glob("db/migrate/*_create_requisitions.rb").first, /foreign_key: true/, "foreign_key: { to_table: :users }"``
+      - [ ] `rails generate scaffold Report requisition:references status:integer`
+      - [ ] Adjust ActiveRecord Relations: ```
+          inject_into_file "app/models/user.rb", "  has_many :requisitions, dependent: :destroy\n", after: "ApplicationRecord\n"
+          inject_into_file "app/models/user.rb", "  has_many :reports, dependent: :destroy\n", after: "ApplicationRecord\n" 
+          inject_into_file "app/models/requisition.rb", "  has_many :reports, dependent: :destroy\n", after: "ApplicationRecord\n"
+          inject_into_file "app/models/requisition.rb", ", class_name: 'User'", after: "belongs_to :requester"
+          inject_into_file "app/models/requisition.rb", ", class_name: 'User'", after: "belongs_to :reporter"
+          inject_into_file "app/models/report.rb", "  enum :status, { open: 0, submitted: 1, archived: 2 }\n", after: "ApplicationRecord\n"
+          ```
+      - [ ] Ensure integration tests continue to work: ```
+          ['requisitions', 'reports'].all? { |s|
+            Dir.glob("test/{controllers,system}/#{s}*_test.rb").all? { |f|
+              gsub_file f, /  setup do\n/, <<~RUBY.indent(2)
+                include Devise::Test::IntegrationHelpers
+                setup do
+                  sign_in users(:one)
+              RUBY
+            }
+          }
+          ```
     - [ ] `rails db:migrate`
     - [ ] `bundle exec rubocop -a`
     - [ ] `rake test:all`
