@@ -979,7 +979,7 @@
 
     - [ ] **Implement the `index` action in `PricingController`**:
       ```ruby
-      inject_into_class "app/controllers/pricing_controller.rb", "PricingController", <<~'RUBY'.indent(2)
+      gsub_file "app/controllers/pricing_controller.rb", /  def index\n  end\n/, <<~'RUBY'.indent(2)
         skip_before_action :authenticate_user!
 
         def index
