@@ -592,9 +592,7 @@ class Baker
                 stdout_and_stderr.winsize = [$stdout.winsize.first, $stderr.winsize.last - line_indent_width]
 
                 stdout_and_stderr.each_char do |char|
-
                   captured_output << char
-
                   parser.parse(char)
 
                 end
