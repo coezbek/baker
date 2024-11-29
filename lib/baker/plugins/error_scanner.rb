@@ -17,7 +17,7 @@ Baker.plugin.register(:after_execution) do
   # We only review the command output for programs which claim that the successfully terminated
   next unless output[:successfully_terminated] == true
 
-  no_of_warnings = output[:command_output].scan(/\b(?<!0\s)(?<!no\s)(?<!without\s)(error|warn|fatal)/i).size
+  no_of_warnings = output[:command_output].scan(/\b(?<!0\s)(?<!no\s)(?<!without\s)(error|warn|fatal|critical)/i).size
 
   if no_of_warnings > 0
 
