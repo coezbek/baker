@@ -28,6 +28,7 @@
   - [ ] `mkdir config/credentials`
   - [ ] `mv config/master.key config/credentials/production.key`
   - [ ] `mv config/credentials.yml.enc config/credentials/production.yml.enc`
+  - [ ] Review production credentials: `rails credentials:edit --environment production`
   - [ ] `git add *.yml.enc .gitignore`
   - [ ] `git commit -m "Update credential management to Rails >= 6"`
 
