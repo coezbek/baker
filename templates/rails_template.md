@@ -979,6 +979,18 @@
           end
           ssh root@#{DEPLOY_HOST} 
           ```
+      - [ ] Add a fallback nginx config:
+          ```bash
+            echo 'server {
+              listen 80 default_server;
+              listen [::]:80 default_server;
+              listen 443 ssl default_server;
+              listen [::]:443 ssl default_server;
+              ssl_reject_handshake on;
+              return 444;
+            }' > /etc/nginx/conf.d/default.conf
+            systemctl restart nginx
+          ```
       - [ ] Install Postgres: `sudo dokku plugin:install https://github.com/dokku/dokku-postgres.git postgres`
 
   - Create the app on dokku:
