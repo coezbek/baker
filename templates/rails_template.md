@@ -998,8 +998,6 @@
     - [ ] Update your DNS config so that #{HOST_NAME} A record (or CNAME) points to #{DEPLOY_HOST}
     - [ ] Set domain: `dokku domains:add #{APP_NAME} #{HOST_NAME}`
     - [ ] Set Let's Encrypt email: `dokku letsencrypt:set #{APP_NAME} email #{FROM_EMAIL}`
-    - [ ] Enable Let's Encrypt: `dokku letsencrypt:enable #{APP_NAME}`
-    - [ ] Rails EXPOSES port 3000 in Dockerfile, so we need port mapping: `dokku ports:add #{APP_NAME} https:443:3000`
     - Enable persistent storage: 
       - [ ] Rails uses 1000:1000 which matches heroku: `dokku storage:ensure-directory --chown heroku #{APP_NAME}`
       - [ ] `dokku storage:mount #{APP_NAME} /var/lib/dokku/data/storage/#{APP_NAME}/rails/storage:/rails/storage`
@@ -1012,6 +1010,10 @@
     - [ ] Set RAILS_MASTER_KEY: `ssh #{DEPLOY_HOST} "dokku config:set #{APP_NAME} RAILS_MASTER_KEY=$(cat config/credentials/production.key)"`
     - [ ] Add Dokku remote: `git remote add dokku dokku@#{DEPLOY_HOST}:#{APP_NAME}`
     - [ ] Push code to Dokku (this includes migration via bin/docker-entrypoint): `git push dokku main`
+::var[WRAP_COMMAND]{ssh #{DEPLOY_HOST} -t "#{COMMAND.gsub('"', '\"')}"}
+    - [ ] Enable Let's Encrypt: `dokku letsencrypt:enable #{APP_NAME}`
+    - [ ] Rails EXPOSES port 3000 in Dockerfile, so we need port mapping: `dokku ports:add #{APP_NAME} https:443:3000`
+::var[WRAP_COMMAND]{}
     - [ ] Open Browser: `bin/browser #{HOST_NAME} 443`
     - [ ] Ensure the application is running at `https://#{HOST_NAME}`
 
