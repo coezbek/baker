@@ -265,4 +265,48 @@ module BakerActions
     end
   end
 
+  #
+  # Insert a positional or keyword argument into an existing method call in a file
+  #
+  # Example usage:
+  # insert_method_arg('config/routes.rb', :devise_for, :users, controllers: { omniauth_callbacks: "users/omniauth_callbacks" })
+  #
+  # This will ensure that `devise_for :users` in `config/routes.rb` includes:
+  # controllers: { omniauth_callbacks: "users/omniauth_callbacks" }
+  #
+  # method_selector is the method name as a string or symbol (e.g. :devise_for) or a RuboCop::NodePattern.
+  #   A string starting with '(' is instantiated as a RuboCop::NodePattern.
+  #
+  #     For example, the example above might be written more precisely as:
+  #       insert_method_arg('config/routes.rb', '(send nil? :devise_for (sym :users) ...)', 
+  #         controllers: { omniauth_callbacks: "users/omniauth_callbacks" })
+  #
+  #       In contrast to the code above, this will only match `devise_for :users`
+  #       The code above will match any `devise_for` call, regardless of the arguments and append :users, etc.
+  #
+  # Keyword arguments are merged recursively.
+  #
+  # Returns true if the file was changed, false otherwise.
+  #
+  # Note: When using the NodePattern, you should use ... to indicate that the method call may have 
+  # additional arguments, which you are not listing.
+  #
+  # If you want to understand the NodePattern syntax, please consult the Rubocop documentation:
+  # https://github.com/rubocop/rubocop-ast/blob/master/docs/modules/ROOT/pages/node_pattern.adoc
+  #
+  def insert_method_arg(file_name, method_selector, required_argument, *positionals, **keywords)
+
+    require_relative 'insert_method_arg'
+    
+    return unless File.exist?(file_name)
+
+    code = File.read(file_name)
+
+    new_code = insert_method_arg(code, method_selector, *positionals, **keywords)
+
+    File.write(file_name, new_code) if new_code != code
+
+    return new_code != code
+  end
+
 end

@@ -206,7 +206,15 @@ Running Baker templates involves executing shell commands on your machine. Alway
 - [ ] Finalize README and add sections on how to install, develop, and contribute.
 - [ ] Integrate `https://www.shellcheck.net/` to check shell commands for common mistakes before running them.
 
+## Template Todos:
+
+- [ ] Generically integrate an ID obfuscation library such as `nanoid`, `hashids`, or `sqids` to generate unique IDs for URLs.
+
 ## Changelog
+
+### Unreleased
+
+- Added `insert_method_arg` as a new Thor-like action to insert a method argument to existing ruby call in a file.
 
 ### 0.2.0
 
