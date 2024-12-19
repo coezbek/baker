@@ -286,7 +286,9 @@ module BakerActions
   #
   # Keyword arguments are merged recursively.
   #
-  # Returns true if the file was changed, false otherwise.
+  # Returns true if the change could be applied (including be merged), false otherwise.
+  #
+  # Prints a warning if the file is identical after the change.
   #
   # Note: When using the NodePattern, you should use ... to indicate that the method call may have 
   # additional arguments, which you are not listing.
@@ -294,7 +296,7 @@ module BakerActions
   # If you want to understand the NodePattern syntax, please consult the Rubocop documentation:
   # https://github.com/rubocop/rubocop-ast/blob/master/docs/modules/ROOT/pages/node_pattern.adoc
   #
-  def insert_method_arg(file_name, method_selector, required_argument, *positionals, **keywords)
+  def insert_method_arg_to_file(file_name, method_selector, required_argument, *positionals, **keywords)
 
     require_relative 'insert_method_arg'
     
@@ -302,11 +304,21 @@ module BakerActions
 
     code = File.read(file_name)
 
-    new_code = insert_method_arg(code, method_selector, *positionals, **keywords)
+    begin
+      new_code = insert_method_arg(code, method_selector, *positionals, **keywords)
 
-    File.write(file_name, new_code) if new_code != code
+      if new_code != code
+        File.write(file_name, new_code) 
+      else
+        puts "insert_method_arg_to_file: File is identical #{file_name}".yellow
+      end
 
-    return new_code != code
+    rescue ArgumentError, PatternNotMatched => e
+      puts "#{e.message}".red
+      return false
+    end
+
+    return true
   end
 
 end

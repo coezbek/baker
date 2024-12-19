@@ -2,6 +2,8 @@ require 'parser/current'
 require 'rubocop'
 require 'rubocop/ast'
 
+class PatternNotMatched < StandardError; end
+
 #
 # method_selector can be a symbol, a method name as a string, a Rubocop::NodePattern, or 
 # a String starting with an open parenthesis to indicate a Rubocop::NodePattern as a string. 
@@ -25,13 +27,30 @@ def insert_method_arg(code, method_selector, *positionals, **keywords)
   source_buffer = source.buffer
   rewriter = Parser::Source::TreeRewriter.new(source_buffer)
   rule = AddToParamHashRule.new(rewriter, method_selector, positionals, keywords)
+
+  if !source.valid_syntax? || !source.ast
+    readable_errors = source.diagnostics.map do |diag|
+      "#{diag.message || diag.reason} on line #{diag.location.line}, column #{diag.location.column}"
+    end
+    # puts readable_errors.join("\n").red
+    raise ArgumentError, "Invalid syntax in code: #{readable_errors.join("\n")}"
+  end
   source.ast.each_node { |n| rule.process(n) }
   new_code = rewriter.process
-  new_code
+
+  if !rule.matched
+    method_selector = method_selector.pattern if method_selector.is_a?(RuboCop::NodePattern)
+
+    raise PatternNotMatched.new("Method not found in code: #{method_selector}")
+  end
+
+  return new_code
 end
 
 class AddToParamHashRule < Parser::AST::Processor
   include RuboCop::AST::Traversal
+
+  attr_reader :matched
   
   def initialize(rewriter, node_pattern, positionals, keywords)
     @rewriter = rewriter
@@ -39,6 +58,7 @@ class AddToParamHashRule < Parser::AST::Processor
     @positionals = positionals
     @keywords = keywords
     @processed_nodes = Set.new # To avoid processing the same node twice within a run
+    @matched = false
   end
   
   def on_send(node)
@@ -50,6 +70,8 @@ class AddToParamHashRule < Parser::AST::Processor
     
     # Check if the node matches the desired pattern
     return unless @node_pattern.match(node)
+
+    @matched = true
 
     # Insert positionals first
     new_positionals = @positionals.reject { |p| argument_exists?(node.arguments, p) }

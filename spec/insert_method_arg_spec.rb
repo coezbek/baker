@@ -284,7 +284,7 @@ RSpec.describe "insert_method_arg" do
     end
   end
 
-  it "returns false if pattern doesn't match due to different arguments" do
+  it "raises if pattern doesn't match due to different arguments" do
     code = <<~RUBY
       Rails.application.routes.draw do
         devise_for :admins
@@ -292,13 +292,12 @@ RSpec.describe "insert_method_arg" do
     RUBY
   
     # Pattern expects (sym :users), but we have :admins
-    result = insert_method_arg(code, '(send nil? :devise_for (sym :users) ...)', controllers: { omniauth_callbacks: "users/omniauth_callbacks" })
-  
-    # No change expected, and result should be false as no match found
-    expect(result).to eq(code)
+    expect {
+      result = insert_method_arg(code, '(send nil? :devise_for (sym :users) ...)', controllers: { omniauth_callbacks: "users/omniauth_callbacks" })
+    }.to raise_error(/Method not found /)
   end
   
-  it "returns false if pattern doesn't allow extra arguments" do
+  it "raises if pattern doesn't allow extra arguments" do
     code = <<~RUBY
       Rails.application.routes.draw do
         devise_for :users, controllers: { something: "exists" }
@@ -307,9 +306,53 @@ RSpec.describe "insert_method_arg" do
   
     # Pattern expects exactly (send nil? :devise_for (sym :users)) with no `...`, 
     # but code has extra arguments (the controllers hash), so it won't match.
-    result = insert_method_arg(code, '(send nil? :devise_for (sym :users))', controllers: { omniauth_callbacks: "users/omniauth_callbacks" })
-  
-    # No change expected, and result should be false as no match found
-    expect(result).to eq(code)
+
+    expect {
+      result = insert_method_arg(code, '(send nil? :devise_for (sym :users))', controllers: { omniauth_callbacks: "users/omniauth_callbacks" })
+    }.to raise_error(/Method not found /)
+  end
+
+  context 'when merging hash keywords recursively' do
+    it 'raises an error on conflicting values' do
+      code = "foo(bar: { baz: 1 })"
+      method_selector = :foo
+      keywords = { bar: { qux: 2 } }
+
+      output = insert_method_arg(code, method_selector, **keywords)
+      expect(output.strip).to eq("foo(bar: { baz: 1, qux: 2 })")
+    end
+  end
+
+  context 'when handling trailing spaces' do
+    it 'removes unnecessary trailing spaces correctly' do
+      code = "foo(bar: :baz) "
+      method_selector = :foo
+      positionals = [:qux]
+
+      output = insert_method_arg(code, method_selector, *positionals)
+      expect(output.strip).to eq("foo(bar: :baz, :qux)")
+    end
+  end
+
+  context 'when adding existing positional arguments' do
+    it 'does not duplicate existing positional arguments' do
+      code = "foo(:qux)"
+      method_selector = :foo
+      positionals = [:qux]
+
+      output = insert_method_arg(code, method_selector, *positionals)
+      expect(output.strip).to eq("foo(:qux)")
+    end
+  end
+
+  context 'when matching complex node patterns' do
+    it 'matches and processes nodes with a complex pattern' do
+      code = "foo(:qux)"
+      method_selector = "(send nil? :foo ...)"
+      positionals = [:bar]
+
+      output = insert_method_arg(code, method_selector, *positionals)
+      expect(output.strip).to eq("foo(:qux, :bar)")
+    end
   end
 end
